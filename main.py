@@ -12,4 +12,4 @@ app.include_router(account_router.app, tags = ["Account"])
 
 @app.get("/")
 def read_root():
-    return {}
+    return {"hi"}

@@ -1,12 +1,15 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from dotenv import load_dotenv
 
-# PostgreSQL 연결 정보
-DATABASE_URL = "postgresql+psycopg2://postgres:!a3525020@localhost:5432/postgres"
+load_dotenv()
 
 # 데이터베이스 엔진 생성
-engine = create_engine(DATABASE_URL)
+database_url = os.getenv("DATABASE_URL")
+engine = create_engine(database_url)
+
 # 세션 생성
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
