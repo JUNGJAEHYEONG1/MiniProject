@@ -1,17 +1,135 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, DateTime, DECIMAL, ForeignKey
+from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from sqlalchemy.orm import relationship
 
 from database import Base
 
+class UserAllergy(Base): #유저와 알레르기의 중간 테이블
+    __tablename__ = 'UserAllergies'
 
-class Account(Base):
-    __tablename__ = "Account"
+    user_id = Column(Integer, ForeignKey('Users.user_id'), primary_key=True)
+    allergy_id = Column(Integer, ForeignKey('Allergies.allergy_id'), primary_key=True)
 
-    no = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(String(40), nullable=False, unique=True)
-    email = Column(String(100), nullable=False, unique=True)
+
+class RecipeIngredient(Base): #재료와 레시피의 중간테이블
+    __tablename__ = "RecipeIngredients"
+
+    recipe_id = Column(Integer, ForeignKey("Recipes.recipe_id"), primary_key=True)
+    ingredient_id = Column(Integer, ForeignKey("Ingredients.ingredient_id"), primary_key=True)
+    quantity = Column(String(50), nullable=False) #양
+
+    recipe = relationship("Recipe")
+    ingredient = relationship("Ingredient")
+
+
+class User(Base):
+    __tablename__ = "Users"
+
+    user_id = Column(Integer, primary_key=True, autoincrement=True)
     hashed_password = Column(String(100), nullable=False)
-    name = Column(String(10), nullable=False, unique=True)
-    regdate = Column(DateTime, nullable=False, default=datetime.now)
+    email = Column(String(100), nullable=False, unique=True)
+    user_name = Column(String(20), nullable=False)
+    gender = Column(String(10), nullable=False)
+    birth_date = Column(Date, nullable=False)
+    height = Column(DECIMAL(5, 2), nullable=False)
+    weight = Column(DECIMAL(5, 2), nullable=False)
+    activity_level = Column(String(50), nullable=False) #운동 정도
+    diet_goal = Column(String(50), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.now)
+
+    allergies = relationship("Allergy", secondary=UserAllergy.__table__, back_populates="users")
+
+    eaten_foods = relationship("UserEatenFoods", back_populates="user", cascade="all, delete-orphan")
+    recommendations = relationship("DailyRecommendation", back_populates="user")
+
+
+class Allergy(Base):
+    __tablename__ = "Allergies"
+
+    allergy_id = Column(Integer, primary_key=True, autoincrement=True)
+    allergy_name = Column(String(100), nullable=False, unique=True)
+
+    users = relationship("User", secondary=UserAllergy.__table__, back_populates="allergies")
+
+class UserEatenFood(Base): #유저가 먹은 음식 기록
+    __tablename__ = "UserEatenFoods"
+
+    log_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("Users.user_id"), nullable=False)
+    image_url = Column(String(255))
+    food_name = Column(String(100))
+    calories = Column(DECIMAL(10, 2))
+    carbs_g = Column(DECIMAL(10, 2))
+    protein_g = Column(DECIMAL(10, 2))
+    fat_g = Column(DECIMAL(10, 2))
+    created_at = Column(DateTime, nullable=False, default=datetime.now)
+
+    user = relationship("User", back_populates="eaten_foods")
+
+
+class Food(Base):
+    __tablename__ = "Foods"
+
+    food_id = Column(Integer, primary_key=True, autoincrement=True)
+    food_name = Column(String(100), nullable=False, unique=True)
+    image_url = Column(String(255))
+    calories = Column(DECIMAL(10, 2))
+    carbs_g = Column(DECIMAL(10, 2))
+    protein_g = Column(DECIMAL(10, 2))
+    fat_g = Column(DECIMAL(10, 2))
+
+    #밀키트와 음식 1:1
+    meal_kit_id = Column(Integer, ForeignKey("MealKits.meal_kit_id"), unique=True)
+    meal_kit = relationship("MealKit", back_populates="food", uselist=False)
+
+    #레시피와 음식 1:1
+    recipe_id = Column(Integer, ForeignKey("Recipes.recipe_id"), unique=True)
+    recipe = relationship("Recipe", back_populates="food", uselist=False)
+
+class DailyRecommendation(Base):
+    __tablename__ = "DailyRecommendations"
+
+    recommendation_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("Users.user_id"), nullable=False)
+    food_id = Column(Integer, ForeignKey("Foods.food_id"), nullable=False)
+    recommend_date = Column(Date, nullable=False)
+    meal_time = Column(String(20), nullable=False)
+
+    user = relationship("User", back_populates="recommendations")
+    food = relationship("Food")
+
+class MealKit(Base):
+    __tablename__ = 'MealKits'
+
+    meal_kit_id = Column(Integer, primary_key=True, autoincrement=True)
+    meal_kit_name = Column(String(50))
+    purchase_link = Column(String(255))
+    image_url = Column(String(255))
+    calories = Column(DECIMAL(10, 2))
+    carbs_g = Column(DECIMAL(10, 2))
+    protein_g = Column(DECIMAL(10, 2))
+    fat_g = Column(DECIMAL(10, 2))
+
+    food = relationship("Food", back_populates="meal_kit")
+
+class Recipe(Base):
+    __tablename__ = "Recipes"
+
+    recipe_id = Column(Integer, primary_key=True, autoincrement=True)
+    recipe_name = Column(String(50))
+    cooking_method = Column(String)
+    recipe_video_link = Column(String(255))
+
+    food = relationship("Food", back_populates="recipe")
+
+    ingredients = relationship("RecipeIngredient", cascade="all, delete-orphan")
+
+class Ingredient(Base): #재료
+    __tablename__ = "Ingredients"
+
+    ingredient_id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(50), nullable=False, unique=True)
+    purchase_link = Column(String(255))
+    image_url = Column(String(255))

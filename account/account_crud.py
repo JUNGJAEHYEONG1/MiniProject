@@ -4,19 +4,32 @@ from typing import Optional, Dict, Any
 from jose import jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-import models
+import models, config, account_schema
 from account import account_schema, account_router
 from fastapi import HTTPException, status, Response,Request
-import config
 
 pwd_context = CryptContext(schemes = ["bcrypt"], deprecated="auto")
 
+def update_user_initial_info(db: Session, user_id: int, user_info: account_schema.UserInitialInfoUpdate):
+    db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
+
+    if db_user:
+        db_user.gender = user_info.gender
+        db_user.birth_date = user_info.birth_date
+        db_user.height = user_info.height
+        db_user.weight = user_info.weight
+        db_user.activity_level = user_info.activity_level
+
+        db.commit()
+        db.refresh(db_user)
+
+    return db_user
 
 def get_user(user_id: str, db: Session):
-    return db.query(models.Account).filter(models.Account.user_id == user_id).first()
+    return db.query(models.User).filter(models.User.user_id == user_id).first()
 
 def get_email(email: str, db: Session):
-    return db.query(models.Account).filter(models.Account.email == email).first()
+    return db.query(models.User).filter(models.User.email == email).first()
 
 def create_user(new_user: account_schema.CreateUserForm, db: Session):
     db_user = get_user(new_user.id, db)
@@ -28,8 +41,8 @@ def create_user(new_user: account_schema.CreateUserForm, db: Session):
         raise HTTPException(status_code = status.HTTP_409_CONFLICT, detail="email is already exists")
     if not new_user.password == new_user.password_confirm:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Password does not match")
-    user = models.Account(
-        name = new_user.username,
+    user = models.User(
+        user_name = new_user.username,
         user_id = new_user.id,
         email = new_user.email,
         hashed_password = pwd_context.hash(new_user.password),

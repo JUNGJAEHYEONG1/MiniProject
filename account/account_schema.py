@@ -1,5 +1,17 @@
 from pydantic import BaseModel, EmailStr, validator
 from fastapi import HTTPException, Form
+from datetime import date
+from decimal import Decimal
+
+class UserInitialInfoUpdate(BaseModel):
+    gender: str
+    birth_date: date
+    height: Decimal
+    weight: Decimal
+    activity_level: str
+
+    class Config:
+        orm_mode = True
 
 class CreateUserForm(BaseModel):
     id : str = Form(...)
@@ -38,3 +50,4 @@ class LoginForm(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
