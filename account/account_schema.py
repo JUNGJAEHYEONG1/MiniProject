@@ -1,17 +1,43 @@
+from datetime import date
 from pydantic import BaseModel, EmailStr, validator
 from fastapi import HTTPException, Form
-from datetime import date
-from decimal import Decimal
+from typing import Optional
 
-class UserInitialInfoUpdate(BaseModel):
-    gender: str
-    birth_date: date
-    height: Decimal
-    weight: Decimal
-    activity_level: str
+class EatLevel(BaseModel):
+    breakfast: Optional[str] = None
+    lunch: Optional[str] = None
+    dinner: Optional[str] = None
+
+class UserProfileUpdate(BaseModel):
+    gender: Optional[str] = None
+    age: Optional[int] = None
+    height: Optional[float] = None
+    weight: Optional[float] = None
+    activity_level: Optional[str] = None
+    goal: Optional[str] = None
+    preferred_food: Optional[str] = None
+    allergies : Optional[list[str]] = None
+    eat_level: Optional[EatLevel] = None
+
+class UserInfo(BaseModel):
+    gender: Optional[str] = None
+    birth_date: Optional[date] = None
+    height: Optional[float] = None
+    weight: Optional[float] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class UserFoodSetting(BaseModel):
+    weight: Optional[float] = None
+    activity_level: Optional[str] = None
+    diet_goal: Optional[str] = None
+    allergies: list[str] = None
+    eat_level: Optional[EatLevel] = None
+
+    class Config:
+        from_attributes = True
+
 
 class CreateUserForm(BaseModel):
     id : str = Form(...)

@@ -3,37 +3,72 @@ from typing import Optional, Dict, Any
 
 from jose import jwt
 from passlib.context import CryptContext
-from sqlalchemy.orm import Session
-import models, config, account_schema
+from sqlalchemy.orm import Session, joinedload
+import models
+import config
 from account import account_schema, account_router
 from fastapi import HTTPException, status, Response,Request
 
 pwd_context = CryptContext(schemes = ["bcrypt"], deprecated="auto")
 
-def update_user_initial_info(db: Session, user_id: int, user_info: account_schema.UserInitialInfoUpdate):
-    db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
 
-    if db_user:
-        db_user.gender = user_info.gender
-        db_user.birth_date = user_info.birth_date
-        db_user.height = user_info.height
-        db_user.weight = user_info.weight
-        db_user.activity_level = user_info.activity_level
+def update_user_profile(db: Session,
+                        user_no : int,
+                        data: account_schema.UserProfileUpdate
+                        ):
 
-        db.commit()
-        db.refresh(db_user)
+    db_user = get_user_data_from_no(user_no, db)
+
+    if not db_user:
+        return None
+
+    update_data = data.dict(exclude_unset=True)
+
+    for key, value in update_data.items():
+        if key == "allergies":
+            allergies_list = db.query(models.Allergy).filter(models.Allergy.allergy_name.in_(value)).all()
+            db_user.allergies = allergies_list
+        elif key == "eat_level":
+            db_eat_level = db_user.eat_level
+
+            if db_eat_level:
+                db_eat_level.breakfast = value.get('breakfast')
+                db_eat_level.lunch = value.get('lunch')
+                db_eat_level.dinner = value.get('dinner')
+            else:
+                db_user.eat_level = models.UserEatLevel(
+                    user_no=user_no,
+                    breakfast=value.get('breakfast'),
+                    lunch=value.get('lunch'),
+                    dinner=value.get('dinner')
+                )
+        else:
+            setattr(db_user, key, value)
+
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
 
     return db_user
 
-def get_user(user_id: str, db: Session):
+def food_setting(db: Session, user_no: int):
+    return db.query(models.User).options(
+        joinedload(models.User.allergies),
+        joinedload(models.User.eat_level)
+    ).filter(models.User.user_no == user_no).first()
+
+def get_user_data_from_id(user_id: str, db: Session):
     return db.query(models.User).filter(models.User.user_id == user_id).first()
 
-def get_email(email: str, db: Session):
+def get_user_data_from_no(user_no: str, db: Session):
+    return db.query(models.User).filter(models.User.user_no == user_no).first()
+
+def get_user_data_from_email(email: str, db: Session):
     return db.query(models.User).filter(models.User.email == email).first()
 
 def create_user(new_user: account_schema.CreateUserForm, db: Session):
-    db_user = get_user(new_user.id, db)
-    db_email = get_email(new_user.email, db)
+    db_user = get_user_data_from_id(new_user.id, db)
+    db_email = get_user_data_from_email(new_user.email, db)
 
     if db_user:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="id is already exists")
@@ -86,8 +121,7 @@ def decode_access_token(token: str):
         )
 
 def login(response : Response, login_form : account_schema.LoginForm, db: Session):
-    db_user = get_user(login_form.id, db)
-
+    db_user = get_user_data_from_id(login_form.id, db)
     if not db_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalidd username or password")
 
@@ -96,7 +130,7 @@ def login(response : Response, login_form : account_schema.LoginForm, db: Sessio
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid username or password")
 
     access_token_expires = timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data = {"user_no": db_user.no}, expires_delta = access_token_expires)
+    access_token = create_access_token(data = {"user_no": db_user.user_no}, expires_delta = access_token_expires)
     #쿠키 만료 시간 ( 세계 시간 utc로 설정 )
     cookie_expiration = (datetime.utcnow() + access_token_expires).replace(tzinfo=timezone.utc)
     response.set_cookie(key = "access_token", value = access_token, expires=cookie_expiration ,httponly=True)
@@ -112,7 +146,7 @@ def logout(response: Response, request: Request):
 
     return {"message": "Logout successful"}
 
-def get_current_user(request: Request) -> dict:
+def get_current_user(request: Request):
     token = request.cookies.get("access_token")
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not token authenticated")
