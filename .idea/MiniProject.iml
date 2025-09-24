@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="PYTHON_MODULE" version="4">
+  <component name="NewModuleRootManager">
+<<<<<<< HEAD
+    <content url="file://$MODULE_DIR$" />
+=======
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/.venv" />
+    </content>
+>>>>>>> b84d5b68037ced59e353e6f839b402f0e37c9697
+    <orderEntry type="jdk" jdkName="Python 3.12 (MiniProject)" jdkType="Python SDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
