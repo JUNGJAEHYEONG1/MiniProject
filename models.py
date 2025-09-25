@@ -9,7 +9,7 @@ from database import Base
 class UserAllergy(Base): #유저와 알레르기의 중간 테이블
     __tablename__ = 'UserAllergies'
 
-    user_id = Column(Integer, ForeignKey('Users.user_id'), primary_key=True)
+    user_id = Column(String(50), ForeignKey('Users.user_id'), primary_key=True)
     allergy_id = Column(Integer, ForeignKey('Allergies.allergy_id'), primary_key=True)
 
 # class RecipeIngredient(Base): #재료와 레시피의 중간테이블
@@ -64,7 +64,7 @@ class UserEatenFood(Base): #유저가 먹은 음식 기록
     log_id = Column(Integer, primary_key=True, autoincrement=True)
     no = Column(Integer, primary_key=True, autoincrement=True)
 
-    user_id = Column(Integer, ForeignKey("Users.user_id"), nullable=False)
+    user_id = Column(String(50), ForeignKey("Users.user_id"), nullable=False)
     image_url = Column(String(255))
     food_name = Column(String(100))
     calories = Column(DECIMAL(10, 2))
@@ -80,7 +80,7 @@ class DailyRecommendation(Base):
     __tablename__ = "DailyRecommendations"
 
     recommendation_id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("Users.user_id"), nullable=False)
+    user_id = Column(String(50), ForeignKey("Users.user_id"), nullable=False)
     food_name = Column(String(100), nullable=False, unique=True)
     image_url = Column(String(255))
     calories = Column(DECIMAL(10, 2))
