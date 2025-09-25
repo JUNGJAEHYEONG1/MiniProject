@@ -8,6 +8,8 @@ load_dotenv()
 
 # 데이터베이스 엔진 생성
 database_url = os.getenv("DATABASE_URL")
+
+# database_url = os.getenv("DATABASE_URL", "sqlite:///./miniproject.db")
 engine = create_engine(database_url)
 
 # 세션 생성

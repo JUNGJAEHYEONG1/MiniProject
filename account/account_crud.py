@@ -123,7 +123,8 @@ def decode_access_token(token: str):
 def login(response : Response, login_form : account_schema.LoginForm, db: Session):
     db_user = get_user_data_from_id(login_form.id, db)
     if not db_user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalidd username or password")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid username or password")
+
 
     res = verify_password(login_form.password, db_user.hashed_password)
     if not res:
