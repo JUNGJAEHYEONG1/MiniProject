@@ -61,7 +61,6 @@ class Allergy(Base):
 class UserEatenFood(Base): #유저가 먹은 음식 기록
     __tablename__ = "UserEatenFoods"
 
-    log_id = Column(Integer, primary_key=True, autoincrement=True)
     no = Column(Integer, primary_key=True, autoincrement=True)
 
     user_id = Column(String(50), ForeignKey("Users.user_id"), nullable=False)
