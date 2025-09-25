@@ -75,7 +75,6 @@ class UserEatenFood(Base): #유저가 먹은 음식 기록
 
     user = relationship("User", back_populates="eaten_foods")
 
-    food_id = Column(Integer, primary_key=True, autoincrement=True)
 class DailyRecommendation(Base):
     __tablename__ = "DailyRecommendations"
 
