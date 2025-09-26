@@ -1,12 +1,40 @@
+from account.account_crud import get_current_user
 from database import get_db
-from fastapi import APIRouter, Response, Request, HTTPException, status
+from fastapi import APIRouter, Response, Request, HTTPException, status, Depends, UploadFile, File
 from sqlalchemy.orm import Session
-from fastapi.params import Depends
 from account import account_crud, account_schema
+from utils.s3 import upload_file_to_s3
 
 app = APIRouter(
     prefix="/users",
 )
+
+@app.get("/eaten/foods/info")
+def get_user_eaten_foods(db:Session = Depends(get_db),
+                         current_user: dict = Depends(account_crud.get_current_user)):
+
+    user_no = current_user.get("user_no")
+    foods = account_crud.get_user_eaten_foods(db = db, user_no = user_no)
+    return foods
+
+@app.post("/eaten-food-image")
+def upload_eaten_food_image(
+        image_file: UploadFile = File(...),
+        db: Session = Depends(get_db),
+        current_user: dict = Depends(account_crud.get_current_user)
+):
+    user_no = current_user.get("user_no")
+    image_url = upload_file_to_s3(file=image_file, user_no=user_no)
+
+    if not image_url:
+        return {"error": "S3 이미지 업로드에 실패했습니다."}
+
+    saved_data = account_crud.create_eaten_food_record(db=db, user_no = user_no, image_url = image_url)
+
+    return {
+        "message" :"이미지가 성공적으로 업로드 되었습니다.",
+        "image_url": image_url,
+        "no:" : saved_data.no}
 
 
 @app.post(path="/signup")

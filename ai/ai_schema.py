@@ -20,5 +20,8 @@ class MealKitDetailPage(BaseModel):
 class MealKitPurchase(BaseModel):
     meal_kit_url: Optional[str] = None
 
+class FoodsRequest(BaseModel):
+    foods: list[str]
+
 
 

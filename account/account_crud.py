@@ -9,7 +9,24 @@ import config
 from account import account_schema, account_router
 from fastapi import HTTPException, status, Response,Request
 
+from models import UserEatenFood
+
 pwd_context = CryptContext(schemes = ["bcrypt"], deprecated="auto")
+
+def create_eaten_food_record(db: Session, user_no : int, image_url: str):
+
+
+    db_item = UserEatenFood(
+        user_no=user_no,
+        image_url=image_url
+    )
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+def get_user_eaten_foods(db: Session, user_no : int):
+    return db.query(models.UserEatenFood).filter(UserEatenFood.user_no == user_no).all()
 
 
 def update_user_profile(db: Session,
@@ -37,7 +54,7 @@ def update_user_profile(db: Session,
                 db_eat_level.dinner = value.get('dinner')
             else:
                 db_user.eat_level = models.UserEatLevel(
-                    user_no=user_no,
+                    user_no= user_no,
                     breakfast=value.get('breakfast'),
                     lunch=value.get('lunch'),
                     dinner=value.get('dinner')
@@ -60,7 +77,7 @@ def food_setting(db: Session, user_no: int):
 def get_user_data_from_id(user_id: str, db: Session):
     return db.query(models.User).filter(models.User.user_id == user_id).first()
 
-def get_user_data_from_no(user_no: str, db: Session):
+def get_user_data_from_no(user_no: int, db: Session):
     return db.query(models.User).filter(models.User.user_no == user_no).first()
 
 def get_user_data_from_email(email: str, db: Session):

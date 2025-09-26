@@ -2,7 +2,6 @@
 import os, json, time, math, random, datetime
 from typing import Dict, Any
 from dotenv import load_dotenv, find_dotenv
-
 # 선택적 임포트 - 라이브러리가 없어도 애플리케이션이 실행되도록 함
 try:
     from openai import OpenAI

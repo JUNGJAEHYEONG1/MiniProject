@@ -9,18 +9,8 @@ from database import Base
 class UserAllergy(Base): #유저와 알레르기의 중간 테이블
     __tablename__ = 'UserAllergies'
 
-    user_id = Column(String(50), ForeignKey('Users.user_id'), primary_key=True)
+    user_no = Column(Integer, ForeignKey('Users.user_no'), primary_key=True)
     allergy_id = Column(Integer, ForeignKey('Allergies.allergy_id'), primary_key=True)
-
-# class RecipeIngredient(Base): #재료와 레시피의 중간테이블
-#     __tablename__ = "RecipeIngredients"
-#
-#     recipe_id = Column(Integer, ForeignKey("Recipes.recipe_id"), primary_key=True)
-#     ingredient_id = Column(Integer, ForeignKey("Ingredients.ingredient_id"), primary_key=True)
-#     quantity = Column(String(50), nullable=False) #양
-#
-#     recipes = relationship("Recipe", back_populates="ingredients")
-#     ingredients = relationship("Ingredient", back_populates="recipes")
 
 
 class User(Base):
@@ -63,7 +53,7 @@ class UserEatenFood(Base): #유저가 먹은 음식 기록
 
     no = Column(Integer, primary_key=True, autoincrement=True)
 
-    user_id = Column(String(50), ForeignKey("Users.user_id"), nullable=False)
+    user_no = Column(Integer, ForeignKey("Users.user_no"), nullable=False)
     image_url = Column(String(255))
     food_name = Column(String(100))
     calories = Column(DECIMAL(10, 2))
@@ -78,7 +68,7 @@ class DailyRecommendation(Base):
     __tablename__ = "DailyRecommendations"
 
     recommendation_id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(String(50), ForeignKey("Users.user_id"), nullable=False)
+    user_no = Column(Integer, ForeignKey("Users.user_no"), nullable=False)
     food_name = Column(String(100), nullable=False, unique=True)
     image_url = Column(String(255))
     calories = Column(DECIMAL(10, 2))
@@ -94,24 +84,6 @@ class DailyRecommendation(Base):
     #레시피와 음식 1:1
     recipe = relationship("Recipe", back_populates="recommendation", uselist=False)
 
-# class DailyRecommendation(Base):
-#     __tablename__ = "DailyRecommendations"
-#
-#     recommendation_id = Column(Integer, primary_key=True, autoincrement=True)
-#     user_id = Column(Integer, ForeignKey("Users.user_id"), nullable=False)
-#     food_id = Column(Integer, ForeignKey("Foods.food_id"), nullable=False)
-#     recommend_date = Column(Date, nullable=False)
-#     meal_time = Column(String(20), nullable=False)
-#
-#     user = relationship("User", back_populates="recommendations")
-#     food = relationship("Food")
-#
-#     recommend_date = Column(DateTime, nullable=False, default = datetime.now)
-#
-#     user = relationship("User", back_populates="recommendations")
-#     meal_kit = relationship("MealKit", back_populates="recommendations", uselist=False)
-#     recipe = relationship("Recipe", back_populates="recommendations", uselist=False)
-
 
 class MealKit(Base):
     __tablename__ = 'MealKits'
@@ -122,15 +94,12 @@ class MealKit(Base):
     purchase_link = Column(String(255))
     image_url = Column(String(255))
 
-    recommendation_id = Column(Integer, ForeignKey("DailyRecommendations.recommendation_id"))
-
     calories = Column(DECIMAL(10, 2))
     carbs_g = Column(DECIMAL(10, 2))
     protein_g = Column(DECIMAL(10, 2))
     fat_g = Column(DECIMAL(10, 2))
 
-    # food = relationship("Food", back_populates="meal_kit")
-
+    recommendation_id = Column(Integer, ForeignKey("DailyRecommendations.recommendation_id"))
     recommendations = relationship("DailyRecommendation", back_populates="meal_kit")
 
 
@@ -153,10 +122,9 @@ class Ingredient(Base): #재료
     ingredient_id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False, unique=True)
     image_url = Column(String(255))
-
-    recipe_id = Column(Integer, ForeignKey("Recipes.recipe_id"), nullable=False)
     purchase_link = Column(String(255), default="None")
 
+    recipe_id = Column(Integer, ForeignKey("Recipes.recipe_id"), nullable=False)
     recipes = relationship("Recipe", back_populates="ingredients")
 
 class UserEatLevel(Base): #유저 아점저 먹는 정도

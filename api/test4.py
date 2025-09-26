@@ -6,12 +6,11 @@ from dotenv import load_dotenv, find_dotenv
 load_dotenv()  # 현재 경로
 load_dotenv(find_dotenv(usecwd=True))  # 워크스페이스 기준 탐색
 
-# from user_to_meal import run_generation, load_user_payload_from_db
+# 올바른 상대 임포트 사용
+from .user_to_meal import run_generation, load_user_payload_from_db
 
 
 def step1_generate_recommendation():
-    from user_to_meal import run_generation, load_user_payload_from_db
-
     # DB 데이터만 사용 (더미 금지)
     user_id = os.getenv("USER_ID")
     if not user_id:
@@ -28,7 +27,7 @@ def step1_generate_recommendation():
     try:
         result = run_generation(
             user_payload, print_pretty=False, save_pretty_file=True
-        )  ### 재형이가 실행
+        )
 
         # 가장 최근 recommendation_*.json 경로 찾기
         out_dir = "out"
@@ -58,76 +57,14 @@ def step1_generate_recommendation():
         # 더미 금지: 바로 에러로 종료
         raise RuntimeError(f"run_generation 실패: {e}")
 
-    print("\n[STEP 1] run_generation 호출 시작")
-    print("- 입력: 최소 사용자 프로필 JSON 1개")
-    try:
-        result = run_generation(user_payload, print_pretty=False, save_pretty_file=True)
-        out_dir = "out"
-        latest = None
-        latest_mtime = -1
-        if os.path.isdir(out_dir):
-            for fn in os.listdir(out_dir):
-                if fn.startswith("recommendation_") and fn.endswith(".json"):
-                    p = os.path.join(out_dir, fn)
-                    m = os.path.getmtime(p)
-                    if m > latest_mtime:
-                        latest_mtime = m
-                        latest = p
-        saved_path = latest
-        print(
-            "- 진행: 모델 호출 → 후처리 → 재료 생성 → 링크 부착 → 파일 저장 순으로 완료"
-        )
-        print("- 출력 샘플(plan_meta만):")
-        print(
-            json.dumps(
-                {"plan_meta": result.get("plan_meta", {})}, ensure_ascii=False, indent=2
-            )
-        )
-        print(f"- 아웃풋 파일: {saved_path}")
-        return result, saved_path
-    except Exception as e:
-        print("! 오류: run_generation 실패, 안전 모드로 폴백합니다.")
-        print(f"! 예외: {e}")
-        dummy = {
-            "plan_meta": {"daily_calorie_target": 2100, "total_calories": 1800},
-            "breakfast": {
-                "title": "달걀토스트와 과일",
-                "subtitle": "간단한 단백질 아침",
-                "items": [{"name": "달걀토스트"}, {"name": "사과"}],
-            },
-            "lunch": {
-                "title": "닭가슴살 덮밥과 미소국",
-                "subtitle": "담백한 점심 구성",
-                "items": [{"name": "닭가슴살 덮밥"}, {"name": "미소국"}],
-            },
-            "dinner": {
-                "title": "두부볶음과 시금치나물",
-                "subtitle": "가볍게 마무리",
-                "items": [{"name": "두부볶음"}, {"name": "시금치나물"}],
-            },
-        }
-        os.makedirs("out", exist_ok=True)
-        ts = time.strftime("%Y%m%d_%H%M%S")
-        path = os.path.join("out", f"recommendation_{ts}.json")
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(dummy, f, ensure_ascii=False, indent=2)
-        print("- 진행: 안전 모드 더미 추천 JSON 생성 및 저장 완료")
-        print("- 출력 샘플(plan_meta만):")
-        print(
-            json.dumps(
-                {"plan_meta": dummy.get("plan_meta", {})}, ensure_ascii=False, indent=2
-            )
-        )
-        print(f"- 아웃풋 파일: {path}")
-        return dummy, path
-
 
 # 2) meal_to_img: make_pictures_for_meals 테스트
 def step2_make_images(plan_json_path):
     print("\n[STEP 2] make_pictures_for_meals 호출 시작")
     print(f"- 입력: recommendation JSON 경로 = {plan_json_path}")
     try:
-        from meal_to_img import make_pictures_for_meals, OUT_DIR as IMG_OUT
+        # 올바른 상대 임포트 사용
+        from .meal_to_img import make_pictures_for_meals, OUT_DIR as IMG_OUT
 
         try:
             make_pictures_for_meals(plan_json_path, variability=0.2)
@@ -163,30 +100,9 @@ def step3_analyze_foods(foods):
 
     # 요리 불필요 키워드(간단 분류 규칙)
     no_cook_keywords = [
-        "과일",
-        "사과",
-        "바나나",
-        "귤",
-        "포도",
-        "요거트",
-        "우유",
-        "두유",
-        "샐러드",
-        "견과",
-        "아몬드",
-        "호두",
-        "땅콩",
-        "김",
-        "김치",
-        "피클",
-        "빵",
-        "식빵",
-        "크로와상",
-        "초콜릿",
-        "에너지바",
-        "나물",
-        "무침",
-        "절임",
+        "과일", "사과", "바나나", "귤", "포도", "요거트", "우유", "두유",
+        "샐러드", "견과", "아몬드", "호두", "땅콩", "김", "김치", "피클",
+        "빵", "식빵", "크로와상", "초콜릿", "에너지바", "나물", "무침", "절임",
     ]
 
     def needs_cooking(name: str) -> bool:
@@ -196,25 +112,13 @@ def step3_analyze_foods(foods):
         for kw in no_cook_keywords:
             if kw in n:
                 return False
-        # 흔히 조리가 필요한 단어가 들어가면 True
         cook_indicators = [
-            "밥",
-            "찌개",
-            "국",
-            "볶음",
-            "조림",
-            "구이",
-            "찜",
-            "수프",
-            "전",
-            "카레",
-            "면",
-            "파스타",
+            "밥", "찌개", "국", "볶음", "조림", "구이", "찜", "수프",
+            "전", "카레", "면", "파스타",
         ]
         for kw in cook_indicators:
             if kw in n:
                 return True
-        # 기본값: 이름 길이가 길거나 복합 메뉴로 보이면 조리 필요로 간주
         return len(n) >= 4
 
     need = [x for x in foods if needs_cooking(x)]
@@ -231,13 +135,12 @@ def step3_analyze_foods(foods):
         return
 
     try:
-        from meal_to_food import analyze_foods
+        # 올바른 상대 임포트 사용
+        from .meal_to_food import analyze_foods
 
         try:
             data = analyze_foods(need, top_k=1)
-            print(
-                "- 진행: 유튜브 검색 → 자막/설명 수집 → 규칙/LLM 추출 → 결과 선택 완료"
-            )
+            print("- 진행: 유튜브 검색 → 자막/설명 수집 → 규칙/LLM 추출 → 결과 선택 완료")
             preview = data[:2] if isinstance(data, list) else data
             print("- 출력 미리보기(최대 2개):")
             print(json.dumps(preview, ensure_ascii=False, indent=2))

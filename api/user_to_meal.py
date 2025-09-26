@@ -30,7 +30,7 @@ load_dotenv()
 load_dotenv(find_dotenv(usecwd=True))
 
 # --------- 데이터베이스 연결 정보 (SQLite 우선, PostgreSQL 대체) ---------
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./miniproject.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = int(os.getenv("DB_PORT", "5432"))
 DB_NAME = os.getenv("DB_NAME")
