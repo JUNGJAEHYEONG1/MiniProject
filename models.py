@@ -120,7 +120,7 @@ class Ingredient(Base): #재료
     __tablename__ = "Ingredients"
 
     ingredient_id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(50), nullable=False, unique=True)
+    name = Column(String(50), nullable=False)
     image_url = Column(String(255))
     purchase_link = Column(String(255), default="None")
 
