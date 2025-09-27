@@ -603,7 +603,7 @@ ING_SCHEMA = {
                         "name": {"type": "string"},
                         "amount": {"type": "string"},
                     },
-                    "required": ["name"],
+                    "required": ["name", "amount"],
                 },
             }
         },
