@@ -488,7 +488,10 @@ def chat_once(
             "max_tokens": max_tokens,
         }
         if schema:
-            kwargs["response_format"] = {"type": "json_object"}  # 이 부분 변경
+            kwargs["response_format"] = {
+                "type": "json_schema",
+                "json_schema": schema,
+            }
         resp = client.chat.completions.create(**kwargs)
         text = extract_json_text_chat(resp)
         finish_reason = getattr(resp.choices[0], "finish_reason", None)
@@ -584,7 +587,7 @@ def build_prompt_variants(user_payload):
 
 ING_SCHEMA = {
     "name": "IngredientList",
-    "strict": True,
+    "strict": False,
     "schema": {
         "type": "object",  # 1. 'array' -> 'object'로 변경
         "additionalProperties": False,
