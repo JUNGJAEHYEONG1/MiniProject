@@ -590,6 +590,7 @@ ING_SCHEMA = {
     "strict": True,
     "schema": {
         "type": "object",  # 1. 'array' -> 'object'로 변경
+        "additionalProperties": False,
         "properties": {
             "ingredients": {  # 2. 'ingredients' 라는 키로 기존 배열 스키마를 감쌉니다.
                 "type": "array",
