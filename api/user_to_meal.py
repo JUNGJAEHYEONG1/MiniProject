@@ -628,7 +628,7 @@ def generate_ingredients_for(dish_name: str) -> list:
             top_p=0.9,
             presence_penalty=0.2,
             frequency_penalty=0.2,
-            schema=ING_SCHEMA,
+            #schema=ING_SCHEMA,
         )
         parsed_data = safe_parse_json(txt)
 
