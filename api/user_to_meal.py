@@ -589,15 +589,24 @@ ING_SCHEMA = {
     "name": "IngredientList",
     "strict": True,
     "schema": {
-        "type": "array",
-        "minItems": 5,
-        "maxItems": 8,
-        "items": {
-            "type": "object",
-            "additionalProperties": False,
-            "properties": {"name": {"type": "string"}, "amount": {"type": "string"}},
-            "required": ["name"],
+        "type": "object",  # 1. 'array' -> 'object'로 변경
+        "properties": {
+            "ingredients": {  # 2. 'ingredients' 라는 키로 기존 배열 스키마를 감쌉니다.
+                "type": "array",
+                "minItems": 5,
+                "maxItems": 8,
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "name": {"type": "string"},
+                        "amount": {"type": "string"},
+                    },
+                    "required": ["name"],
+                },
+            }
         },
+        "required": ["ingredients"],  # 3. 'ingredients' 키를 필수로 지정
     },
 }
 
@@ -623,7 +632,11 @@ def generate_ingredients_for(dish_name: str) -> list:
             frequency_penalty=0.2,
             schema=ING_SCHEMA,
         )
-        data = safe_parse_json(txt)
+        parsed_data = safe_parse_json(txt)
+
+        data = []
+        if isinstance(parsed_data, dict) and "ingredients" in parsed_data:
+            data = parsed_data["ingredients"]
         if isinstance(data, list):
             cleaned = []
             for it in data:
