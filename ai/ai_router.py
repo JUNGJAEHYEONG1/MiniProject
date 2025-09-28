@@ -91,20 +91,27 @@ async def generate_recommendation_analyze_and_save(
             detail=f"처리 중 서버 오류 발생: {str(e)}"
         )
 
-@app.get("/detail/page",
-         response_model=ai_schema.MealKitDetailPage,
-         description="test case")
-def get_mealkit_detail_page(
+
+@app.get("/meal-kit/detail",
+         response_model=ai_schema.MealKitDetail,
+         description="추천식단 id별 밀키트 조회")
+def read_meal_kit_details(
+        recommendation_id: int,
         db: Session = Depends(get_db),
         current_user: dict = Depends(account_crud.get_current_user)
 ):
     user_no = current_user.get("user_no")
-    db_user = ai_crud.get_meal_kit_info(db=db, user_no=user_no)
+    db_recommendation = ai_crud.get_meal_kit_by_id(
+        db=db,
+        recommendation_id=recommendation_id,
+        user_no=user_no
+    )
 
+    if db_recommendation is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recommendation not found or not token")
 
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_BAD_REQUEST, detail="User not found")
-    return db_user
+    return db_recommendation
+
 
 @app.get("/recommendations/{recommendation_id}",
          response_model=ai_schema.RecommendationDetail,

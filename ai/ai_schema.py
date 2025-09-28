@@ -11,13 +11,6 @@ class FoodDetailPage(BaseModel):
     protein_g : Optional[Decimal] = None
     fat_g : Optional[Decimal] = None
 
-class MealKitDetailPage(BaseModel):
-    meal_kit_name: Optional[str] = None
-    calories : Optional[Decimal] = None
-    carbs_g : Optional[Decimal] = None
-    protein_g : Optional[Decimal] = None
-    fat_g : Optional[Decimal] = None
-
 class MealKitPurchase(BaseModel):
     meal_kit_url: Optional[str] = None
 
@@ -25,6 +18,7 @@ class FoodsRequest(BaseModel):
     foods: list[str]
 
 class MealKitInfo(BaseModel):
+    meal_kit_id : int
     name: str = Field(alias='meal_kit_name')
     calories: Optional[Decimal] = None
     carbs_g: Optional[Decimal] = None

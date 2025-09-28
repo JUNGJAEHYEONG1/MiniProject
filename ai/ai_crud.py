@@ -96,5 +96,16 @@ def get_recipe_for_recommendation(db: Session, recommendation_id: int) -> Option
 
     return recommendation.recipe
 
-def get_meal_kit_by_id(db: Session, meal_kit_id: int) -> Optional[models.MealKit]:
-    return db.query(models.MealKit).filter(models.MealKit.meal_kit_id == meal_kit_id).first()
+def get_meal_kit_by_id(db: Session, recommendation_id : int, user_no: int):
+    recommendation = (
+        db.query(models.DailyRecommendation)
+        .options(
+            joinedload(models.DailyRecommendation.meal_kits)
+        )
+        .filter(
+            models.DailyRecommendation.recommendation_id == recommendation_id,
+            models.DailyRecommendation.user_no == user_no
+        )
+        .first()
+    )
+    return recommendation
