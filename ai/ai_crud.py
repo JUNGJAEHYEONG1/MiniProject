@@ -67,18 +67,6 @@ def create_recommendation_from_analysis(db: Session, user_no: int, analysis_data
         raise e
 
 
-def get_recommendation_details(db: Session, recommendation_id: int):
-
-    recommendation = (
-        db.query(models.DailyRecommendation)
-        .options(joinedload(models.DailyRecommendation.meal_kits))
-        .filter(models.DailyRecommendation.recommendation_id == recommendation_id)
-        .first()
-    )
-
-    return recommendation
-
-
 def get_recipe_for_recommendation(db: Session, recommendation_id: int) -> Optional[models.Recipe]:
 
     recommendation = (

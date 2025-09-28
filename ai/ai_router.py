@@ -113,17 +113,6 @@ def read_meal_kit_details(
     return db_recommendation
 
 
-@app.get("/recommendations/{recommendation_id}",
-         response_model=ai_schema.RecommendationDetail,
-         description="추천 음식 상세 정보")
-def read_recommendation_details(recommendation_id: int, db: Session = Depends(get_db)):
-    db_recommendation = ai_crud.get_recommendation_details(db, recommendation_id=recommendation_id)
-
-    if db_recommendation is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recommendation not found")
-
-    return db_recommendation
-
 
 @app.get("/recommendations/{recommendation_id}/recipe",
          response_model=ai_schema.RecipeDetail,
