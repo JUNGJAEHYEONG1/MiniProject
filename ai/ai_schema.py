@@ -6,17 +6,17 @@ from decimal import Decimal
 
 class FoodDetailPage(BaseModel):
     food_name: Optional[str] = None
-    calories: Optional[float] = None
-    carbs_g : Optional[float] = None
-    protein_g : Optional[float] = None
-    fat_g : Optional[float] = None
+    calories: Optional[Decimal] = None
+    carbs_g : Optional[Decimal] = None
+    protein_g : Optional[Decimal] = None
+    fat_g : Optional[Decimal] = None
 
 class MealKitDetailPage(BaseModel):
     meal_kit_name: Optional[str] = None
-    calories : Optional[float] = None
-    carbs_g : Optional[float] = None
-    protein_g : Optional[float] = None
-    fat_g : Optional[float] = None
+    calories : Optional[Decimal] = None
+    carbs_g : Optional[Decimal] = None
+    protein_g : Optional[Decimal] = None
+    fat_g : Optional[Decimal] = None
 
 class MealKitPurchase(BaseModel):
     meal_kit_url: Optional[str] = None
@@ -26,10 +26,10 @@ class FoodsRequest(BaseModel):
 
 class MealKitInfo(BaseModel):
     name: str = Field(alias='meal_kit_name')
-    calories: Decimal
-    carbs_g: Decimal
-    protein_g: Decimal
-    fat_g: Decimal
+    calories: Optional[Decimal] = None
+    carbs_g: Optional[Decimal] = None
+    protein_g: Optional[Decimal] = None
+    fat_g: Optional[Decimal] = None
 
     class Config:
         from_attributes = True
@@ -39,10 +39,10 @@ class MealKitInfo(BaseModel):
 class RecommendationDetail(BaseModel):
     food_name: str
     image_url: Optional[str] = None
-    total_calories: Decimal = Field(alias='calories')
-    total_carbs_g: Decimal = Field(alias='carbs_g')
-    total_protein_g: Decimal = Field(alias='protein_g')
-    total_fat_g: Decimal = Field(alias='fat_g')
+    total_calories: Optional[Decimal] = Field(default=None, alias='calories')
+    total_carbs_g: Optional[Decimal] = Field(default=None, alias='carbs_g')
+    total_protein_g: Optional[Decimal] = Field(default=None, alias='protein_g')
+    total_fat_g: Optional[Decimal] = Field(default=None, alias='fat_g')
 
     meal_kit_list: list[MealKitInfo] = Field(alias='meal_kits')
 

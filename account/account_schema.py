@@ -25,8 +25,8 @@ class EatLevel(BaseModel):
 class UserProfileUpdate(BaseModel):
     gender: Optional[str] = None
     age: Optional[int] = None
-    height: Optional[float] = None
-    weight: Optional[float] = None
+    height: Optional[Decimal] = None
+    weight: Optional[Decimal] = None
     activity_level: Optional[str] = None
     goal: Optional[str] = None
     preferred_food: Optional[str] = None
@@ -36,14 +36,14 @@ class UserProfileUpdate(BaseModel):
 class UserInfo(BaseModel):
     gender: Optional[str] = None
     birth_date: Optional[date] = None
-    height: Optional[float] = None
-    weight: Optional[float] = None
+    height: Optional[Decimal] = None
+    weight: Optional[Decimal] = None
 
     class Config:
         from_attributes = True
 
 class UserFoodSetting(BaseModel):
-    weight: Optional[float] = None
+    weight: Optional[Decimal] = None
     activity_level: Optional[str] = None
     diet_goal: Optional[str] = None
     allergies: list[str] = None
