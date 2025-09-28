@@ -22,39 +22,70 @@ async def generate_recommendation_analyze_and_save(
     user_id = user_data.user_id
 
     try:
-        result, plan_path, foods = test4.generate_for_user(user_id)
+        result, plan_path, food_names = test4.generate_for_user(user_id)
 
-        detailed_analyses = meal_to_food.analyze_foods(foods)
-        saved_items = []
-        #for i, analysis_data in detailed_analyses:
-        for i, analysis_data in enumerate(result):
-            detailed_analyses_info = detailed_analyses[i] if i < len(detailed_analyses) else {}
+        detailed_analyses = meal_to_food.analyze_foods(food_names)
 
-            print("\n--- Loop Start ---")
-            print(f"analysis_data from 'result': {analysis_data}")
-            print(f"type(analysis_data): {type(analysis_data)}")
-            print(f"detailed_analyses_info: {detailed_analyses_info}")
-            print(f"type(detailed_analyses_info): {type(detailed_analyses_info)}")
-            print("------------------\n")
+        plan_meta = result.get("plan_meta", {})
+        total_nutrition = plan_meta.get("macros_total", {})
 
-            final_analysis_data = {**analysis_data, **detailed_analyses_info}
+        final_analysis_data = {
+            "food_name": plan_meta.get("goal_note", "AI 추천 식단"),
+            "image_url": None, #일단 이미지 none
+            "total_calories": total_nutrition.get("kcal") or plan_meta.get("total_calories"),
+            "total_carbs_g": total_nutrition.get("carb_g"),
+            "total_protein_g": total_nutrition.get("protein_g"),
+            "total_fat_g": total_nutrition.get("fat_g"),
+            "items": [],
+        }
 
-            saved_item = ai_crud.create_recommendation_from_analysis(
-                db=db,
-                user_no=user_no,
-                analysis_data=final_analysis_data,
-            )
-            saved_items.append({
-                "food_name": saved_item.food_name,
-                "recommendation_id": saved_item.recommendation_id
-            })
+        all_meal_kits_for_db = []
+
+        for meal_type in ['breakfast', 'lunch', 'dinner']:
+            if meal_type in result and 'items' in result[meal_type]:
+                for ai_item in result[meal_type]['items']:
+
+                    matched_youtube_info = next(
+                        (info for info in detailed_analyses if info.get('food_name') == ai_item.get('name_ko')),{} )
+
+                    combined_kit_data = {
+                        "name": ai_item.get("name_ko"),
+                        "purchase_link": matched_youtube_info.get("youtube_link"),
+                        "image_url": None,  #일단 이미지 none
+                        "kcal": ai_item.get("kcal") or ai_item.get("calories"),  # 'kcal' 또는 'calories' 키 확인
+                        "carb_g": ai_item.get("macros", {}).get("carb_g"),
+                        "protein_g": ai_item.get("macros", {}).get("protein_g"),
+                        "fat_g": ai_item.get("macros", {}).get("fat_g"),
+                    }
+                    all_meal_kits_for_db.append(combined_kit_data)
+
+        final_analysis_data["items"] = all_meal_kits_for_db
+
+        if detailed_analyses:
+            first_recipe_info = detailed_analyses[0]
+            final_analysis_data["food_name"] = first_recipe_info.get("food_name", final_analysis_data["food_name"])
+            final_analysis_data["recipe"] = first_recipe_info.get("recipe", [])
+            final_analysis_data["youtube_link"] = first_recipe_info.get("youtube_link")
+            final_analysis_data["ingredients"] = first_recipe_info.get("ingredients", [])
+
+        saved_item = ai_crud.create_recommendation_from_analysis(
+            db=db,
+            user_no=user_no,
+            analysis_data=final_analysis_data,
+        )
+
         return {
             "success": True,
             "message": "식단 추천 생성 및 저장 완료 되었습니다",
-            "saved_recommendations": saved_items
+            "saved_recommendation": {
+                "food_name": saved_item.food_name,
+                "recommendation_id": saved_item.recommendation_id
+            }
         }
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=f"처리 중 서버 오류 발생: {str(e)}"
