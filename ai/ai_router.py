@@ -61,5 +61,31 @@ def get_mealkit_detail_page(
         raise HTTPException(status_code=status.HTTP_404_BAD_REQUEST, detail="User not found")
     return db_user
 
+@app.get("/recommendations/{recommendation_id}", response_model=ai_schema.RecommendationDetail)
+def read_recommendation_details(recommendation_id: int, db: Session = Depends(get_db)):
+    db_recommendation = ai_crud.get_recommendation_details(db, recommendation_id=recommendation_id)
+
+    if db_recommendation is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recommendation not found")
+
+    return db_recommendation
 
 
+@app.get("/recommendations/{recommendation_id}/recipe", response_model=ai_schema.RecipeDetail)
+def read_recommendation_recipe(recommendation_id: int, db: Session = Depends(get_db)):
+
+    db_recipe = ai_crud.get_recipe_for_recommendation(db, recommendation_id=recommendation_id)
+
+    if db_recipe is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recipe for this recommendation not found")
+
+    return db_recipe
+
+@app.get("/meal-kit/purchase-link/{meal_kit_id}", response_model=ai_schema.PurchaseLink)
+def get_purchase_link_for_meal_kit(meal_kit_id: int, db:Session = Depends(get_db)):
+    db_meal_kit = ai_crud.get_meal_kit_by_id(db, meal_kit_id)
+
+    if db_meal_kit is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal Kit not found")
+
+    return db_meal_kit

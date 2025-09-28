@@ -1,7 +1,21 @@
-from datetime import date
+from datetime import datetime, date
 from pydantic import BaseModel, EmailStr, validator
 from fastapi import HTTPException, Form
 from typing import Optional
+from decimal import Decimal
+
+class EatenFoodDetail(BaseModel):
+    no: int
+    food_name: Optional[str] = None
+    image_url: Optional[str] = None
+    created_at: datetime
+    calories: Optional[Decimal] = None
+    carbs_g: Optional[Decimal] = None
+    protein_g: Optional[Decimal] = None
+    fat_g: Optional[Decimal] = None
+
+    class Config:
+        from_attributes = True
 
 class EatLevel(BaseModel):
     breakfast: Optional[str] = None

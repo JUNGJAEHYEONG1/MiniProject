@@ -4,10 +4,31 @@ from fastapi import APIRouter, Response, Request, HTTPException, status, Depends
 from sqlalchemy.orm import Session
 from account import account_crud, account_schema
 from utils.s3 import upload_file_to_s3
+from api import Image
 
 app = APIRouter(
     prefix="/users",
 )
+
+
+@app.get("/eaten/foods/{eaten_food_no}", response_model=account_schema.EatenFoodDetail)
+def read_eaten_food_details(
+        eaten_food_no: int,
+        db: Session = Depends(get_db),
+        current_user: dict = Depends(account_crud.get_current_user)
+):
+    user_no = current_user.get("user_no")
+
+    db_eaten_food = account_crud.get_eaten_food_by_no(
+        db=db,
+        eaten_food_no=eaten_food_no,
+        user_no=user_no
+    )
+
+    if db_eaten_food is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="해당 음식 기록을 찾을 수 없습니다.")
+
+    return db_eaten_food
 
 @app.get("/eaten/foods/info")
 def get_user_eaten_foods(db:Session = Depends(get_db),
@@ -18,23 +39,47 @@ def get_user_eaten_foods(db:Session = Depends(get_db),
     return foods
 
 @app.post("/eaten-food-image")
-def upload_eaten_food_image(
+async def upload_eaten_food_image(
         image_file: UploadFile = File(...),
         db: Session = Depends(get_db),
         current_user: dict = Depends(account_crud.get_current_user)
 ):
+    image_bytes = await image_file.read()
+
+    await image_file.seek(0)
+
     user_no = current_user.get("user_no")
     image_url = upload_file_to_s3(file=image_file, user_no=user_no)
+
+
 
     if not image_url:
         return {"error": "S3 이미지 업로드에 실패했습니다."}
 
-    saved_data = account_crud.create_eaten_food_record(db=db, user_no = user_no, image_url = image_url)
+    try:
+        analysis_result = Image.analyze_image_bytes(
+            image_bytes=image_bytes,
+            filename=image_file.filename,
+            detail=2
+        )
+
+    except Exception as e:
+        print(f"OpenAI API 호출 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail="이미지 영양 정보 분석에 실패했습니다.")
+
+    saved_data = account_crud.create_eaten_food_record(
+        db=db,
+        user_no=user_no,
+        image_url=image_url,
+        nutrition_data=analysis_result
+    )
 
     return {
-        "message" :"이미지가 성공적으로 업로드 되었습니다.",
+        "message": "이미지가 성공적으로 업로드 및 분석되었습니다.",
         "image_url": image_url,
-        "no:" : saved_data.no}
+        "no": saved_data.no,
+        "analysis": analysis_result
+    }
 
 
 @app.post(path="/signup")

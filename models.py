@@ -79,7 +79,7 @@ class DailyRecommendation(Base):
     user = relationship("User", back_populates="recommendations")
 
     #밀키트와 음식 N:1
-    meal_kit = relationship("MealKit", back_populates="recommendations", uselist=False)
+    meal_kits = relationship("MealKit", back_populates="recommendation")
 
     #레시피와 음식 1:1
     recipe = relationship("Recipe", back_populates="recommendation", uselist=False)
@@ -100,7 +100,7 @@ class MealKit(Base):
     fat_g = Column(DECIMAL(10, 2))
 
     recommendation_id = Column(Integer, ForeignKey("DailyRecommendations.recommendation_id"))
-    recommendations = relationship("DailyRecommendation", back_populates="meal_kit")
+    recommendation = relationship("DailyRecommendation", back_populates="meal_kits")
 
 
 class Recipe(Base):
@@ -121,7 +121,7 @@ class Ingredient(Base): #재료
 
     ingredient_id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False)
-    image_url = Column(String(255))
+    image_url = Column(String(255), default="None")
     purchase_link = Column(String(255), default="None")
 
     recipe_id = Column(Integer, ForeignKey("Recipes.recipe_id"), nullable=False)
