@@ -93,7 +93,7 @@ async def generate_recommendation_analyze_and_save(
 
 
 @app.get("/meal-kit/detail",
-         response_model=ai_schema.MealKitInfo,
+         response_model=ai_schema.RecommendationDetail,
          description="추천식단 id별 밀키트 조회")
 def read_meal_kit_details(
         recommendation_id: int,
