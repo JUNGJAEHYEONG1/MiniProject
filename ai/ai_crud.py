@@ -14,10 +14,30 @@ def create_recommendation_from_analysis(db: Session, user_no: int, analysis_data
 
         db_recommendation = models.DailyRecommendation(
             user_no=user_no,
-            food_name=analysis_data["food_name"]
+            food_name=analysis_data.get("food_name", "AI 추천 식단"),
+            image_url=analysis_data.get("image_url"),
+            calories=analysis_data.get("total_calories"),
+            carbs_g=analysis_data.get("total_carbs_g"),
+            protein_g=analysis_data.get("total_protein_g"),
+            fat_g=analysis_data.get("total_fat_g")
         )
         db.add(db_recommendation)
         db.flush()
+
+        meal_kit_items = analysis_data.get("items", [])
+
+        for item in meal_kit_items:
+            db_meal_kit = models.MealKit(
+                meal_kit_name=item.get("name"),
+                purchase_link=item.get("purchase_link"),
+                image_url=item.get("image_url"),
+                calories=item.get("kcal"),
+                carbs_g=item.get("carb_g"),
+                protein_g=item.get("protein_g"),
+                fat_g=item.get("fat_g"),
+                recommendation_id=db_recommendation.recommendation_id
+            )
+            db.add(db_meal_kit)
 
         recipe_steps = analysis_data.get("recipe", [])
         cooking_method_str = "\n".join(recipe_steps)
