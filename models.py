@@ -69,7 +69,7 @@ class DailyRecommendation(Base):
 
     recommendation_id = Column(Integer, primary_key=True, autoincrement=True)
     user_no = Column(Integer, ForeignKey("Users.user_no"), nullable=False)
-    food_name = Column(String(100), nullable=False, unique=True)
+    food_name = Column(String(100), nullable=False)
     image_url = Column(String(255))
     calories = Column(DECIMAL(10, 2))
     carbs_g = Column(DECIMAL(10, 2))
