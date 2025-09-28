@@ -10,8 +10,17 @@ app = APIRouter(
     prefix="/users",
 )
 
+@app.get("recommended-amount/calories", description="총 칼로리 대체")
+def get_user_calories(db:Session = Depends(get_db),
+                      current_user: dict = Depends(account_crud.get_current_user)):
+    user_no = current_user.get("user_no")
+    data = account_crud.get_calories(db = db, user_no = user_no)
+    total_calories = data.get("total_calories")
+    return total_calories
 
-@app.get("/eaten/foods/{eaten_food_no}", response_model=account_schema.EatenFoodDetail)
+@app.get("/eaten/foods/{eaten_food_no}",
+         response_model=account_schema.EatenFoodDetail,
+         description="먹은 음식 상세 정보")
 def read_eaten_food_details(
         eaten_food_no: int,
         db: Session = Depends(get_db),
@@ -30,7 +39,7 @@ def read_eaten_food_details(
 
     return db_eaten_food
 
-@app.get("/eaten/foods/info")
+@app.get("/eaten/foods/info",description="먹은 음식 전체 불러오기 test")
 def get_user_eaten_foods(db:Session = Depends(get_db),
                          current_user: dict = Depends(account_crud.get_current_user)):
 
@@ -38,7 +47,7 @@ def get_user_eaten_foods(db:Session = Depends(get_db),
     foods = account_crud.get_user_eaten_foods(db = db, user_no = user_no)
     return foods
 
-@app.post("/eaten-food-image")
+@app.post("/eaten-food-image", description= "먹은 음식 사진 올리기")
 async def upload_eaten_food_image(
         image_file: UploadFile = File(...),
         db: Session = Depends(get_db),
@@ -82,19 +91,19 @@ async def upload_eaten_food_image(
     }
 
 
-@app.post(path="/signup")
+@app.post(path="/signup", description="회원가입")
 async def signup(new_user: account_schema.CreateUserForm = Depends(), db:Session = Depends(get_db)):
     return account_crud.create_user(new_user, db)
 
-@app.post("/login")
+@app.post("/login", description="로그인")
 async def login(response: Response, login_form: account_schema.LoginForm = Depends(), db: Session = Depends(get_db)):
     return account_crud.login(response, login_form, db)
 
-@app.get(path="/logout")
+@app.get(path="/logout", description="로그아웃")
 async def logout(response: Response, request: Request):
     return account_crud.logout(response, request)
 
-@app.patch("/inital/info")
+@app.patch("/inital/info", description="초기 설문")
 def get_inital_profile(data: account_schema.UserProfileUpdate,
                    db: Session = Depends(get_db),
                    current_user: dict = Depends(account_crud.get_current_user)
@@ -111,7 +120,9 @@ def get_inital_profile(data: account_schema.UserProfileUpdate,
 
     return updated_user
 
-@app.get("/profile/info", response_model=account_schema.UserInfo)
+@app.get("/profile/info",
+         response_model=account_schema.UserInfo,
+         description="개인 프로필")
 def get_my_info(
         db: Session = Depends(get_db),
         current_user: dict = Depends(account_crud.get_current_user)
@@ -123,7 +134,9 @@ def get_my_info(
         raise HTTPException(status_code=status.HTTP_404_BAD_REQUEST, detail="User not found")
     return db_user
 
-@app.get("/food-setting", response_model=account_schema.UserFoodSetting)
+@app.get("/food-setting",
+         response_model=account_schema.UserFoodSetting,
+         description="음식 설정 정보")
 def get_food_setting(
         db: Session = Depends(get_db),
         current_user: dict = Depends(account_crud.get_current_user)
@@ -136,7 +149,9 @@ def get_food_setting(
 
     return db_user
 
-@app.patch("/food-setting", response_model=account_schema.UserFoodSetting)
+@app.patch("/food-setting",
+           response_model=account_schema.UserFoodSetting,
+           description="음식 설정 하기")
 def update_food_setting(
         data: account_schema.UserFoodSetting,
         db: Session = Depends(get_db),

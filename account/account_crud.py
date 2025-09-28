@@ -14,6 +14,9 @@ from models import UserEatenFood
 pwd_context = CryptContext(schemes = ["bcrypt"], deprecated="auto")
 
 
+def get_calories(db: Session, user_no: int):
+    db.query(models.DailyRecommendation).filter(models.DailyRecommendation.user_no == user_no).first()
+
 def get_eaten_food_by_no(db: Session, eaten_food_no: int, user_no: int):
     return (
         db.query(models.UserEatenFood)
@@ -26,17 +29,10 @@ def get_eaten_food_by_no(db: Session, eaten_food_no: int, user_no: int):
 
 
 def create_eaten_food_record(db: Session, user_no: int, image_url: str, nutrition_data: dict):
-    """
-    사용자가 먹은 음식 기록을 DB에 저장합니다. AI 분석 결과를 포함합니다.
-    """
-
-    # AI가 분석한 음식 목록에서 음식 이름을 생성합니다.
-    # 예: "김치찌개, 계란후라이, 흰쌀밥"
     food_items = nutrition_data.get("items", {})
     food_name_list = [item.get("name_ko", "알수없음") for item in food_items.values()]
     food_name = ", ".join(food_name_list)
 
-    # AI가 분석한 총 영양 정보를 가져옵니다.
     total_nutrition = nutrition_data.get("total", {})
 
     db_eaten_food = models.UserEatenFood(

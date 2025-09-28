@@ -38,7 +38,7 @@ async def health_check():
 #             "user_id": user_id
 #         }
 
-@app.post("/analyze-foods")
+@app.post("/analyze-foods", description="test")
 async def analyze_foods_endpoint(foods: list[str]):
     try:
         result = analyze_foods(foods)
@@ -52,7 +52,7 @@ async def analyze_foods_endpoint(foods: list[str]):
             "error": str(e)
         }
 
-@app.post("/generate-images")
+@app.post("/generate-images", description="test")
 async def generate_images_endpoint(plan_json_path: str):
     """식단 이미지 생성"""
     try:
