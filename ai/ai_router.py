@@ -17,7 +17,6 @@ async def generate_recommendation_analyze_and_save(
         current_user: dict = Depends(account_crud.get_current_user),
 ):
     user_no = current_user.get("user_no")
-
     user_data = account_crud.get_user_data_from_no(user_no, db)
     user_id = user_data.user_id
 
@@ -26,11 +25,15 @@ async def generate_recommendation_analyze_and_save(
 
         detailed_analyses = meal_to_food.analyze_foods(foods)
         saved_items = []
-        for analysis_data in detailed_analyses:
+        #for i, analysis_data in detailed_analyses:
+        for i, analysis_data in enumerate(result):
+            detailed_analyses_info = detailed_analyses[i] if i < len(detailed_analyses) else {}
+            final_analysis_data = {**analysis_data, **detailed_analyses_info}
+
             saved_item = ai_crud.create_recommendation_from_analysis(
                 db=db,
                 user_no=user_no,
-                analysis_data=analysis_data,
+                analysis_data=final_analysis_data,
             )
             saved_items.append({
                 "food_name": saved_item.food_name,
