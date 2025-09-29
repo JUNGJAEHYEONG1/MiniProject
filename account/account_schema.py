@@ -35,7 +35,7 @@ class UserProfileUpdate(BaseModel):
 
 class UserInfo(BaseModel):
     gender: Optional[str] = None
-    birth_date: Optional[date] = None
+    age: Optional[int] = None
     height: Optional[Decimal] = None
     weight: Optional[Decimal] = None
 

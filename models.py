@@ -25,7 +25,7 @@ class User(Base):
     user_name = Column(String(20), nullable=False)
     user_age = Column(Integer)
     gender = Column(String(10))
-    birth_date = Column(Date)
+    age = Column(Integer)
 
     height = Column(DECIMAL(5, 2))
     weight = Column(DECIMAL(5, 2))
