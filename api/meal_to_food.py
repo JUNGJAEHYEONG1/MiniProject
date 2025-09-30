@@ -1,6 +1,7 @@
 import os, re, time, json
 from typing import List, Dict, Any, Tuple
 from dotenv import load_dotenv, find_dotenv
+import config
 
 # 선택적 임포트 - 라이브러리가 없어도 애플리케이션이 실행되도록 함
 try:
@@ -26,13 +27,13 @@ except ImportError:
 
 # --------- .env 로드 ---------
 # 1) 기본 탐색(.env를 현재 파일/상위 폴더에서 탐색)
-load_dotenv()  # 이미 설정된 OS 환경변수를 기본적으로 덮어쓰지 않음
+load_dotenv(override=True)  # 이미 설정된 OS 환경변수를 기본적으로 덮어쓰지 않음
 # 2) 현재 작업 디렉터리 기준 추가 탐색(IDE/터미널 실행 위치가 다른 경우 보강)
 load_dotenv(find_dotenv(usecwd=True))  # 못 찾으면 None, 찾으면 그 경로를 로드
 
 # --------- 키 읽기 ---------
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
-YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "").strip()
+OPENAI_API_KEY = config.OPENAI_API_KEY
+YOUTUBE_API_KEY = config.YOUTUBE_API_KEY
 
 if not OPENAI_API_KEY:
     print("경고: 환경 변수 OPENAI_API_KEY가 비어 있습니다. OpenAI 기능이 제한됩니다.")

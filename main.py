@@ -1,3 +1,5 @@
+#taskkill /F /IM python.exe
+#tasklist | findstr "python"
 from fastapi import FastAPI
 import models
 from database import engine

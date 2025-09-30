@@ -9,6 +9,7 @@ from account import account_crud, account_schema
 from api import test4, meal_to_food
 from ai import ai_crud, ai_schema
 import models
+import json
 app = APIRouter(
     prefix="/ai",
 )
@@ -35,38 +36,41 @@ async def generate_recommendation_analyze_and_save(
         final_analysis_data = {
             "food_name": plan_meta.get("goal_note", "AI 추천 식단"),
             "image_url": None, #일단 이미지 none
-            "total_calories": total_nutrition.get("kcal") or plan_meta.get("total_calories"),
+            "total_calories": plan_meta.get("total_calories"),
             "total_carbs_g": total_nutrition.get("carb_g"),
             "total_protein_g": total_nutrition.get("protein_g"),
             "total_fat_g": total_nutrition.get("fat_g"),
             "items": [],
         }
 
-        all_meal_kits_for_db = []
+        all_meal_kits_from_ai = []
 
         for meal_type in ['breakfast', 'lunch', 'dinner']:
-            if meal_type in result and 'items' in result[meal_type]:
-                for ai_item in result[meal_type]['items']:
+            if meal_type in result and isinstance(result[meal_type], dict) and 'items' in result[meal_type]:
+                all_meal_kits_from_ai.extend(result[meal_type]['items'])
 
-                    matched_youtube_info = next(
-                        (info for info in detailed_analyses if info.get('food_name') == ai_item.get('name_ko')),{} )
+        combined_meal_kits_for_db = []
+        for ai_item in all_meal_kits_from_ai:
+            matched_youtube_info = next(
+                (info for info in detailed_analyses if info.get('food_name') == ai_item.get('name')),
+                {}
+            )
 
-                    combined_kit_data = {
-                        "name": ai_item.get("name_ko"),
-                        "purchase_link": matched_youtube_info.get("youtube_link"),
-                        "image_url": None,  #일단 이미지 none
-                        "kcal": ai_item.get("kcal") or ai_item.get("calories"),  # 'kcal' 또는 'calories' 키 확인
-                        "carb_g": ai_item.get("macros", {}).get("carb_g"),
-                        "protein_g": ai_item.get("macros", {}).get("protein_g"),
-                        "fat_g": ai_item.get("macros", {}).get("fat_g"),
-                    }
-                    all_meal_kits_for_db.append(combined_kit_data)
+            combined_kit_data = {
+                "name": ai_item.get("name"),
+                "purchase_link": matched_youtube_info.get("youtube_link") or ai_item.get("meal_kit_link"),
+                "kcal": ai_item.get("calories"),
+                "carb_g": ai_item.get("macros", {}).get("carb_g"),
+                "protein_g": ai_item.get("macros", {}).get("protein_g"),
+                "fat_g": ai_item.get("macros", {}).get("fat_g"),
+            }
+            combined_meal_kits_for_db.append(combined_kit_data)
 
-        final_analysis_data["items"] = all_meal_kits_for_db
+        final_analysis_data["items"] = combined_meal_kits_for_db
 
         if detailed_analyses:
             first_recipe_info = detailed_analyses[0]
-            final_analysis_data["food_name"] = first_recipe_info.get("food_name", final_analysis_data["food_name"])
+            final_analysis_data["recipe_name"] = first_recipe_info.get("food_name", first_recipe_info.get("food_name", "AI 추천 레시피"))
             final_analysis_data["recipe"] = first_recipe_info.get("recipe", [])
             final_analysis_data["youtube_link"] = first_recipe_info.get("youtube_link")
             final_analysis_data["ingredients"] = first_recipe_info.get("ingredients", [])
@@ -95,7 +99,7 @@ async def generate_recommendation_analyze_and_save(
         )
 
 
-@app.get("/meal-kit/detail{meal_kit_id}",
+@app.get("/meal-kit/detail{recommendation_id}",
          response_model=ai_schema.RecommendationDetail,
          description="추천식단 id별 밀키트 조회")
 def read_meal_kit_details(

@@ -2,6 +2,7 @@
 import os, json, time, math, random, datetime
 from typing import Dict, Any
 from dotenv import load_dotenv, find_dotenv
+import config
 # 선택적 임포트 - 라이브러리가 없어도 애플리케이션이 실행되도록 함
 try:
     from openai import OpenAI
@@ -11,10 +12,10 @@ except ImportError:
     print("경고: openai가 설치되지 않았습니다. 이미지 생성 기능이 제한됩니다.")
 
 # .env 로드
-load_dotenv()
+load_dotenv(override=True)
 load_dotenv(find_dotenv(usecwd=True))
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+OPENAI_API_KEY = config.OPENAI_API_KEY
 if not OPENAI_API_KEY:
     print("경고: 환경 변수 OPENAI_API_KEY가 비어 있습니다. 이미지 생성 기능이 제한됩니다.")
 

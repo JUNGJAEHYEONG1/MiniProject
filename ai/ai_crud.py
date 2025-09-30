@@ -43,7 +43,7 @@ def create_recommendation_from_analysis(db: Session, user_no: int, analysis_data
         cooking_method_str = "\n".join(recipe_steps)
 
         db_recipe = models.Recipe(
-            recipe_name=f"{analysis_data['food_name']} 레시피",
+            recipe_name=analysis_data.get("recipe_name", "AI 추천 레시피"),
             cooking_method=cooking_method_str,
             recipe_video_link=analysis_data.get("youtube_link"),
             recommendation_id=db_recommendation.recommendation_id
@@ -109,4 +109,4 @@ def get_meal_kit_purchase_link(db: Session, meal_kit_id: int, user_no: int) -> O
         )
         .first()
     )
-    return purchase_link[0] if purchase_link else None
+    return purchase_link

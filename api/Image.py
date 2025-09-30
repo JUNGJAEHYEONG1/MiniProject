@@ -21,8 +21,9 @@ Image.py
 사전 준비:
   - 환경변수 OPENAI_API_KEY 설정 필요
 """
-
 from __future__ import annotations
+
+from dotenv import load_dotenv, find_dotenv
 
 __all__ = [
     "analyze_image_with_openai",
@@ -36,15 +37,15 @@ import sys
 from typing import Any, Dict
 
 from typing import Tuple
+import config
 
 
 import base64
 from openai import OpenAI
-from dotenv import load_dotenv
 
-load_dotenv()  # .env 파일을 자동으로 읽어서 os.environ에 넣어줌
-
-
+# .env 로드
+load_dotenv(override=True)
+load_dotenv(find_dotenv(usecwd=True))
 # =====================
 # Prompt Templates
 # =====================
@@ -356,7 +357,7 @@ def _analyze_b64_core(
         + f"\n이미지 설명: {image_caption}\n"
     )
 
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = config.OPENAI_API_KEY
     if not api_key:
         raise EnvironmentError(
             "환경변수 OPENAI_API_KEY가 설정되어 있지 않습니다. 'export OPENAI_API_KEY=...' 후 다시 실행하세요."
@@ -516,7 +517,7 @@ def analyze_image_with_openai(
     debug: bool = False,
     detail: int = 1,
 ) -> Dict[str, Any]:
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = config.OPENAI_API_KEY
     if not api_key:
         raise EnvironmentError(
             "환경변수 OPENAI_API_KEY가 설정되어 있지 않습니다. 'export OPENAI_API_KEY=...' 후 다시 실행하세요."
@@ -551,7 +552,7 @@ def analyze_image_bytes(
     debug: bool = False,
     detail: int = 1,
 ) -> Dict[str, Any]:
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = config.OPENAI_API_KEY
     if not api_key:
         raise EnvironmentError(
             "환경변수 OPENAI_API_KEY가 설정되어 있지 않습니다. 'export OPENAI_API_KEY=...' 후 다시 실행하세요."

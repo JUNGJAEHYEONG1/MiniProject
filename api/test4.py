@@ -2,9 +2,9 @@ import os
 import json
 import time
 from dotenv import load_dotenv, find_dotenv
-
-load_dotenv()  # 현재 경로
-load_dotenv(find_dotenv(usecwd=True))  # 워크스페이스 기준 탐색
+# .env 로드
+load_dotenv()
+load_dotenv(find_dotenv(usecwd=True))
 
 # 올바른 상대 임포트 사용
 from .user_to_meal import run_generation, load_user_payload_from_db

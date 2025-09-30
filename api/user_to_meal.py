@@ -6,7 +6,11 @@ import datetime
 import random
 from typing import List, Dict, Any, Tuple
 from urllib.parse import quote_plus
+import config
 from dotenv import load_dotenv, find_dotenv
+# .env 로드
+load_dotenv(override=True)
+load_dotenv(find_dotenv(usecwd=True))
 
 # 선택적 임포트 - 라이브러리가 없어도 애플리케이션이 실행되도록 함
 try:
@@ -23,11 +27,6 @@ try:
 except ImportError:
     PSYCOPG2_AVAILABLE = False
     print("경고: psycopg2가 설치되지 않았습니다. PostgreSQL 기능이 제한됩니다.")
-
-# --------- .env 로드 (.env 탐색 범위 확장) ---------
-# 파일 위치 기준 탐색 + CWD 기준 탐색을 모두 시도
-load_dotenv()
-load_dotenv(find_dotenv(usecwd=True))
 
 # --------- 데이터베이스 연결 정보 (SQLite 우선, PostgreSQL 대체) ---------
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -178,7 +177,7 @@ EXAMPLE_USER_PAYLOAD = {
 }
 
 # --------- 키 읽기 ---------
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+OPENAI_API_KEY = config.OPENAI_API_KEY
 if not OPENAI_API_KEY:
     print("경고: 환경 변수 OPENAI_API_KEY가 비어 있습니다. OpenAI 기능이 제한됩니다.")
 
@@ -288,7 +287,7 @@ MEALS_SCHEMA = {
     },
 }
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-2024-08-06")
+MODEL = config.OPENAI_MODEL
 
 
 def extract_json_text_chat(resp):
