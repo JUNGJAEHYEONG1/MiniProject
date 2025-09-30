@@ -19,7 +19,7 @@ class FoodsRequest(BaseModel):
 
 class MealKitInfo(BaseModel):
     meal_kit_id : int
-    name: str = Field(alias='meal_kit_name')
+    name: Optional[str] = Field(default=None, alias='meal_kit_name')
     calories: Optional[Decimal] = None
     carbs_g: Optional[Decimal] = None
     protein_g: Optional[Decimal] = None

@@ -104,8 +104,8 @@ def get_meal_kit_purchase_link(db: Session, meal_kit_id: int, user_no: int) -> O
         db.query(models.MealKit.purchase_link)
         .join(models.DailyRecommendation)
         .filter(
-            models.MealKit.meal_kit_id == meal_kit_id,
-            models.DailyRecommendation.user_no == user_no
+            models.DailyRecommendation.user_no == user_no,
+            models.MealKit.meal_kit_id == meal_kit_id
         )
         .first()
     )

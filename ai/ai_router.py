@@ -95,7 +95,7 @@ async def generate_recommendation_analyze_and_save(
         )
 
 
-@app.get("/meal-kit/detail",
+@app.get("/meal-kit/detail{meal_kit_id}",
          response_model=ai_schema.RecommendationDetail,
          description="추천식단 id별 밀키트 조회")
 def read_meal_kit_details(
