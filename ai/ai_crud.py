@@ -120,4 +120,4 @@ def get_meal_kit_purchase_link(db: Session, meal_kit_id: int, user_no: int) -> O
         )
         .first()
     )
-    return purchase_link
+    return purchase_link[0] if purchase_link else None
