@@ -138,6 +138,10 @@ def get_purchase_link_for_meal_kit(
         current_user : dict = Depends(account_crud.get_current_user)):
     
     user_no = current_user.get("user_no")
+
+    if user_no is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token data")
+
     db_meal_kit = ai_crud.get_meal_kit_purchase_link(db = db, meal_kit_id = meal_kit_id, user_no = user_no)
 
     if db_meal_kit is None:
