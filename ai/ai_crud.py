@@ -98,17 +98,6 @@ def get_meal_kit_by_id(db: Session, recommendation_id : int, user_no: int):
     )
     return recommendation
 
-def get_meal_kit_purchase_link(db: Session, meal_kit_id: int, user_no: int) -> Optional[str]:
-    purchase_link = (
-        db.query(models.MealKit.purchase_link)
-        .join(models.DailyRecommendation)
-        .filter(
-            models.MealKit.meal_kit_id == meal_kit_id,
-            models.DailyRecommendation.user_no == user_no
-        )
-        .first()
-    )
-    return purchase_link
 
 def get_meal_kit_purchase_link(db: Session, meal_kit_id: int, user_no: int) -> Optional[str]:
     purchase_link = (

@@ -136,7 +136,7 @@ def get_purchase_link_for_meal_kit(
         meal_kit_id: int,
         db:Session = Depends(get_db),
         current_user : dict = Depends(account_crud.get_current_user)):
-    
+
     user_no = current_user.get("user_no")
 
     if user_no is None:
