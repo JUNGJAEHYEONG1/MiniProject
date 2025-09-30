@@ -1,3 +1,6 @@
+from sqlalchemy.sql.functions import current_user
+
+from account.account_crud import get_current_user
 from database import get_db
 from fastapi import APIRouter, Response, Request, HTTPException, status
 from sqlalchemy.orm import Session
@@ -129,8 +132,13 @@ def read_recommendation_recipe(recommendation_id: int, db: Session = Depends(get
 @app.get("/meal-kit/purchase-link/{meal_kit_id}",
          response_model=ai_schema.PurchaseLink,
          description="밀키트 구매 링크")
-def get_purchase_link_for_meal_kit(meal_kit_id: int, db:Session = Depends(get_db)):
-    db_meal_kit = ai_crud.get_meal_kit_by_id(db, meal_kit_id)
+def get_purchase_link_for_meal_kit(
+        meal_kit_id: int,
+        db:Session = Depends(get_db),
+        current_user : dict = Depends(account_crud.get_current_user)):
+    
+    user_no = current_user.get("user_no")
+    db_meal_kit = ai_crud.get_meal_kit_purchase_link(db = db, meal_kit_id = meal_kit_id, user_no = user_no)
 
     if db_meal_kit is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal Kit not found")
