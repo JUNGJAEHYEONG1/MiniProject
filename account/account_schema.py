@@ -36,11 +36,35 @@ class UserProfileUpdate(BaseModel):
     allergies : Optional[list[str]] = None
     eat_level: Optional[EatLevel] = None
 
+class AllergyInfo(BaseModel):
+    allergy_id: int
+    allergy_name: str
+    class Config:
+        from_attributes = True
+
+class UserProfile(BaseModel):
+    gender: Optional[str] = None
+    age: Optional[int] = None
+    height: Optional[Decimal] = None
+    weight: Optional[Decimal] = None
+    activity_level: Optional[str] = None
+    diet_goal: Optional[str] = None
+    preferred_food: Optional[str] = None
+    allergies : Optional[list[AllergyInfo]] = None
+    eat_level: Optional[EatLevel] = None
+
 class UserInfo(BaseModel):
     gender: Optional[str] = None
     age: Optional[int] = None
     height: Optional[Decimal] = None
     weight: Optional[Decimal] = None
+
+    class Config:
+        from_attributes = True
+
+class AllergyInfo(BaseModel):
+    allergy_id: int
+    allergy_name: str
 
     class Config:
         from_attributes = True

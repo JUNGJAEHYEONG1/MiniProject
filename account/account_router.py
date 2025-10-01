@@ -122,7 +122,7 @@ def patch_inital_profile(data: account_schema.UserProfileUpdate,
 
 @app.get("/inital/info",
          description = "설문 정보 보기",
-         response_model=account_schema.UserProfileUpdate)
+         response_model=account_schema.UserProfile)
 def get_profile(
         db: Session = Depends(get_db),
         current_user: dict = Depends(account_crud.get_current_user)
