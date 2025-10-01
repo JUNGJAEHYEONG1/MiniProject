@@ -104,7 +104,7 @@ async def logout(response: Response, request: Request):
     return account_crud.logout(response, request)
 
 @app.patch("/inital/info", description="초기 설문")
-def get_inital_profile(data: account_schema.UserProfileUpdate,
+def patch_inital_profile(data: account_schema.UserProfileUpdate,
                    db: Session = Depends(get_db),
                    current_user: dict = Depends(account_crud.get_current_user)
                    ):
@@ -119,6 +119,25 @@ def get_inital_profile(data: account_schema.UserProfileUpdate,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return updated_user
+
+@app.get("/inital/info",
+         description = "설문 정보 보기",
+         response_model=account_schema.UserProfileUpdate)
+def get_profile(
+        db: Session = Depends(get_db),
+        current_user: dict = Depends(account_crud.get_current_user)
+):
+    user_no = current_user.get("user_no")
+
+    if user_no is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token data")
+
+    user_profile = account_crud.get_user_profile(db=db, user_no=user_no)
+
+    if not user_profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return user_profile
 
 @app.get("/profile/info",
          response_model=account_schema.UserInfo,

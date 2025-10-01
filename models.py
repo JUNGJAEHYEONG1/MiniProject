@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 
 from database import Base
 
+#DROP TABLE "Allergies", "DailyRecommendations", "Ingredients", "MealKits", "Recipes", "UserAllergies", "UserEatLevels", "UserEatenFoods", "Users" CASCADE;
 class UserAllergy(Base): #유저와 알레르기의 중간 테이블
     __tablename__ = 'UserAllergies'
 
@@ -23,7 +24,6 @@ class User(Base):
     hashed_password = Column(String(100), nullable=False)
     email = Column(String(100), nullable=False, unique=True)
     user_name = Column(String(20), nullable=False)
-    user_age = Column(Integer)
     gender = Column(String(10))
     age = Column(Integer)
 
@@ -31,6 +31,7 @@ class User(Base):
     weight = Column(DECIMAL(5, 2))
     activity_level = Column(String(50)) #운동 정도
     diet_goal = Column(String(50))
+    preferred_food = Column(String(50))
     created_at = Column(DateTime, nullable=False, default=datetime.now)
 
     allergies = relationship("Allergy", secondary=UserAllergy.__table__, back_populates="users")

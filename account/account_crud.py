@@ -63,19 +63,21 @@ def update_user_profile(db: Session,
     if not db_user:
         return None
 
-    update_data = data.dict(exclude_unset=True)
+    update_data = data.model_dump(exclude_unset=True)
 
     for key, value in update_data.items():
         if key == "allergies":
-            allergies_list = db.query(models.Allergy).filter(models.Allergy.allergy_name.in_(value)).all()
+            allergies_list = (db.query(models.Allergy)
+                              .filter(models.Allergy.allergy_name.in_(value))
+                              .all())
             db_user.allergies = allergies_list
         elif key == "eat_level":
             db_eat_level = db_user.eat_level
 
             if db_eat_level:
-                db_eat_level.breakfast = value.get('breakfast')
-                db_eat_level.lunch = value.get('lunch')
-                db_eat_level.dinner = value.get('dinner')
+                db_eat_level.breakfast = value.get("breakfast")
+                db_eat_level.lunch = value.get("lunch")
+                db_eat_level.dinner = value.get("dinner")
             else:
                 db_user.eat_level = models.UserEatLevel(
                     user_no= user_no,
@@ -91,6 +93,15 @@ def update_user_profile(db: Session,
     db.refresh(db_user)
 
     return db_user
+
+def get_user_profile(db: Session, user_no: int) -> Optional[models.User]:
+    user = (
+        db.query(models.User)
+        .options(joinedload(models.User.eat_level))
+        .filter(models.User.user_no == user_no)
+        .first()
+    )
+    return user
 
 def food_setting(db: Session, user_no: int):
     return db.query(models.User).options(

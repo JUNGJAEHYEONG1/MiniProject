@@ -22,13 +22,16 @@ class EatLevel(BaseModel):
     lunch: Optional[str] = None
     dinner: Optional[str] = None
 
+    class Config:
+        from_attributes = True
+
 class UserProfileUpdate(BaseModel):
     gender: Optional[str] = None
     age: Optional[int] = None
     height: Optional[Decimal] = None
     weight: Optional[Decimal] = None
     activity_level: Optional[str] = None
-    goal: Optional[str] = None
+    diet_goal: Optional[str] = None
     preferred_food: Optional[str] = None
     allergies : Optional[list[str]] = None
     eat_level: Optional[EatLevel] = None
