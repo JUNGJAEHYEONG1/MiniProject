@@ -54,7 +54,7 @@ def load_user_payload_from_db(user_id: str) -> dict:
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT user_id, user_age, gender, height, weight,
+                SELECT user_id, age, gender, height, weight,
                        activity_level, diet_goal, created_at
                 FROM Users
                 WHERE user_id = ?
@@ -88,7 +88,7 @@ def load_user_payload_from_db(user_id: str) -> dict:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     """
-                    SELECT user_id, user_age, gender, height, weight,
+                    SELECT user_id, age, gender, height, weight,
                            activity_level, diet_goal, created_at
                     FROM "Users"
                     WHERE user_id = %s
@@ -146,7 +146,7 @@ def load_user_payload_from_db(user_id: str) -> dict:
     goals = [goal_txt] if goal_txt else []
 
     payload = {
-        "age": row_dict.get("user_age") or None,
+        "age": row_dict.get("age") or None,
         "sex": sex,
         "height_cm": height_cm,
         "weight_kg": weight_kg,
