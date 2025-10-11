@@ -10,6 +10,12 @@ from api import test4, meal_to_food
 from ai import ai_crud, ai_schema
 import models
 import json
+import re
+from utils.s3 import upload_file_to_s3
+import os # os 모듈을 import 합니다 (파일 삭제용)
+import traceback
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 app = APIRouter(
     prefix="/ai",
 )
@@ -18,6 +24,7 @@ app = APIRouter(
 @app.post("/generate-recommendation/food",
           description="AI 식단 추천 생성 및 분석 후 DB 저장")
 async def generate_recommendation_analyze_and_save(
+        request: Request,
         db: Session = Depends(get_db),
         current_user: dict = Depends(account_crud.get_current_user),
 ):
@@ -26,68 +33,66 @@ async def generate_recommendation_analyze_and_save(
     user_id = user_data.user_id
 
     try:
-        result, plan_path, food_names = test4.generate_for_user(user_id)
-
+        result, plan_path, food_names, generated_image_paths = test4.generate_for_user(user_id)
         detailed_analyses = meal_to_food.analyze_foods(food_names)
 
-        plan_meta = result.get("plan_meta", {})
-        total_nutrition = plan_meta.get("macros_total", {})
+        base_url = str(request.base_url)
 
-        final_analysis_data = {
-            "food_name": plan_meta.get("goal_note", "AI 추천 식단"),
-            "image_url": None, #일단 이미지 none
-            "total_calories": plan_meta.get("total_calories"),
-            "total_carbs_g": total_nutrition.get("carb_g"),
-            "total_protein_g": total_nutrition.get("protein_g"),
-            "total_fat_g": total_nutrition.get("fat_g"),
-            "items": [],
-        }
-
-        all_meal_kits_from_ai = []
+        saved_recommendations = []
 
         for meal_type in ['breakfast', 'lunch', 'dinner']:
-            if meal_type in result and isinstance(result[meal_type], dict) and 'items' in result[meal_type]:
-                all_meal_kits_from_ai.extend(result[meal_type]['items'])
+            if meal_type in result and isinstance(result[meal_type], dict):
 
-        combined_meal_kits_for_db = []
-        for ai_item in all_meal_kits_from_ai:
-            matched_youtube_info = next(
-                (info for info in detailed_analyses if info.get('food_name') == ai_item.get('name')),
-                {}
-            )
+                meal_data = result[meal_type]
 
-            combined_kit_data = {
-                "name": ai_item.get("name"),
-                "purchase_link": matched_youtube_info.get("youtube_link") or ai_item.get("meal_kit_link"),
-                "kcal": ai_item.get("calories"),
-                "carb_g": ai_item.get("macros", {}).get("carb_g"),
-                "protein_g": ai_item.get("macros", {}).get("protein_g"),
-                "fat_g": ai_item.get("macros", {}).get("fat_g"),
-            }
-            combined_meal_kits_for_db.append(combined_kit_data)
+                s3_image_url = None
+                # 2. 해당 끼니(meal_type)의 로컬 이미지 경로를 가져옵니다.
+                local_image_path = generated_image_paths.get(meal_type)
 
-        final_analysis_data["items"] = combined_meal_kits_for_db
+                if local_image_path and os.path.exists(local_image_path):
+                    try:
+                        # 3. 로컬 이미지 파일을 열어서 S3에 업로드합니다.
+                        with open(local_image_path, "rb") as image_file:
+                            # 기존 S3 업로드 함수를 재활용합니다.
+                            # 이 함수는 파일 객체를 받아 S3 URL을 반환해야 합니다.
+                            s3_image_url = upload_file_to_s3(file=image_file, user_no=user_no,
+                                                             save_path="ai_recommendations")
 
-        if detailed_analyses:
-            first_recipe_info = detailed_analyses[0]
-            final_analysis_data["recipe_name"] = first_recipe_info.get("food_name", first_recipe_info.get("food_name", "AI 추천 레시피"))
-            final_analysis_data["recipe"] = first_recipe_info.get("recipe", [])
-            final_analysis_data["youtube_link"] = first_recipe_info.get("youtube_link")
-            final_analysis_data["ingredients"] = first_recipe_info.get("ingredients", [])
+                        # 4. (선택사항) 서버에 남은 임시 이미지 파일을 삭제합니다.
+                        os.remove(local_image_path)
 
-        saved_item = ai_crud.create_recommendation_from_analysis(
-            db=db,
-            user_no=user_no,
-            analysis_data=final_analysis_data,
-        )
+                    except Exception as s3_error:
+                        print(f"S3 업로드 실패: {s3_error}")
+                        # 업로드에 실패해도 일단 진행하도록 s3_image_url은 None으로 둡니다.
+
+                # 5. meal_data에 최종 S3 URL을 저장합니다.
+                meal_data["image_url"] = s3_image_url
+
+                first_item_name = meal_data.get("items", [{}])[0].get("name")
+                if first_item_name:
+                    matched_youtube_info = next(
+                        (info for info in detailed_analyses if info.get('food_name') == first_item_name),
+                        None
+                    )
+                    if matched_youtube_info:
+                        matched_youtube_info["recipe_name"] = matched_youtube_info.get("food_name", "AI 추천 레시피")
+                        meal_data.update(matched_youtube_info)
+
+                saved_item = ai_crud.create_recommendation_from_analysis(
+                    db=db,
+                    user_no=user_no,
+                    analysis_data=meal_data,
+                )
+                saved_recommendations.append({
+                    "food_name": saved_item.food_name,
+                    "recommendation_id": saved_item.recommendation_id,
+                    "image_url" : saved_item.image_url
+                })
 
         return {
             "success": True,
             "message": "식단 추천 생성 및 저장 완료 되었습니다",
-            "saved_recommendation": {
-                "food_name": saved_item.food_name,
-                "recommendation_id": saved_item.recommendation_id
-            }
+            "saved_recommendations": saved_recommendations
         }
 
     except Exception as e:

@@ -59,24 +59,46 @@ def step1_generate_recommendation():
 
 
 # 2) meal_to_img: make_pictures_for_meals 테스트
-def step2_make_images(plan_json_path):
+def step2_make_images(plan_json_path: str) -> dict:  # 반환 타입을 dict로 명시
     print("\n[STEP 2] make_pictures_for_meals 호출 시작")
     print(f"- 입력: recommendation JSON 경로 = {plan_json_path}")
+
+    # 1. 생성된 이미지 경로들을 저장할 빈 딕셔너리를 만듭니다.
+    generated_image_paths = {}
+    IMG_OUT = os.getenv("MEAL_PIC_OUT_DIR", "meal_pics")
+
     try:
-        # 올바른 상대 임포트 사용
-        from .meal_to_img import make_pictures_for_meals, OUT_DIR as IMG_OUT
+        from .meal_to_img import make_pictures_for_meals
 
         try:
+            # `make_pictures_for_meals` 함수가 성공적으로 실행되었다고 가정합니다.
             make_pictures_for_meals(plan_json_path, variability=0.2)
             print("- 진행: 타이틀 추출 → 프롬프트 생성 → 이미지 생성 → 파일 저장 완료")
-            print(f"- 이미지 출력 디렉터리: {IMG_OUT}")
+
+            # 2. (성공 시) 생성된 파일 경로를 찾아서 딕셔너리에 추가합니다.
+            #    JSON 파일을 다시 읽어서 파일 이름을 예측합니다.
+            with open(plan_json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            for meal_key in ("breakfast", "lunch", "dinner"):
+                title = ((data.get(meal_key) or {}).get("title") or "").strip()
+                if not title:
+                    continue
+
+                # 로그에 찍히는 파일 이름 생성 규칙과 동일하게 만듭니다.
+                sanitized_title = re.sub(r'[\\/*?:"<>|]', "", title).replace(" ", "_").replace(",", "")
+                expected_path = os.path.join(IMG_OUT, f"{meal_key}_{sanitized_title}.png")
+
+                # 파일이 실제로 존재하는지 확인하고 딕셔너리에 추가합니다.
+                if os.path.exists(expected_path):
+                    generated_image_paths[meal_key] = expected_path
+
         except Exception as e_inner:
             print("! 이미지 생성 실패: 안전 모드로 대체 PNG 생성")
             print(f"! 예외: {e_inner}")
-            IMG_OUT = os.getenv("MEAL_PIC_OUT_DIR", "meal_pics")
             os.makedirs(IMG_OUT, exist_ok=True)
             with open(plan_json_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
+
             for meal_key in ("breakfast", "lunch", "dinner"):
                 title = ((data.get(meal_key) or {}).get("title") or "").strip()
                 if not title:
@@ -86,11 +108,18 @@ def step2_make_images(plan_json_path):
                 with open(dummy_path, "wb") as wf:
                     wf.write(b"\x89PNG\r\n\x1a\n")
                 print(f"- 더미 이미지 저장: {dummy_path}")
+
+                # 3. (실패 시) 생성된 더미 파일 경로를 딕셔너리에 추가합니다.
+                generated_image_paths[meal_key] = dummy_path
+
             print("- 진행: 타이틀 기반 더미 이미지 생성 완료")
+
     except Exception as e:
         print("! 오류: meal_to_img 임포트/실행 실패")
         print(f"! 예외: {e}")
         print("- 진행: 이 스텝은 건너뜀(상위 파이프라인에는 영향 없음)")
+
+    return generated_image_paths
 
 
 # 3) meal_to_food: analyze_foods 테스트(외부에서 음식 리스트를 인자로 주입)
@@ -191,9 +220,9 @@ def generate_for_user(user_id: str):
     os.environ["USER_ID"] = str(user_id)
 
     result, plan_path = step1_generate_recommendation()
-    step2_make_images(plan_path)
+    generated_image_paths = step2_make_images(plan_path)
     foods = extract_foods_from_plan(plan_path)
-    return result, plan_path, foods
+    return result, plan_path, foods, generated_image_paths
 
 
 def main():
