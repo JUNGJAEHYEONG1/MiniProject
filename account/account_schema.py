@@ -4,6 +4,15 @@ from fastapi import HTTPException, Form
 from typing import Optional
 from decimal import Decimal
 
+class EatenFoodSimple(BaseModel):
+    no : int
+    food_name : Optional[str] = None
+    image_url: Optional[str] = None
+    created_at : datetime
+
+    class Config:
+        from_attributes = True
+
 class EatenFoodDetail(BaseModel):
     no: int
     food_name: Optional[str] = None

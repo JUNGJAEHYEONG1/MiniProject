@@ -1,3 +1,5 @@
+from datetime import date
+
 from account.account_crud import get_current_user
 from database import get_db
 from fastapi import APIRouter, Response, Request, HTTPException, status, Depends, UploadFile, File
@@ -18,7 +20,7 @@ def get_user_calories(db:Session = Depends(get_db),
     total_calories = data.get("total_calories")
     return total_calories
 
-@app.get("/eaten/foods/{eaten_food_no}",
+@app.get("/eaten-foods/{eaten_food_no}",
          response_model=account_schema.EatenFoodDetail,
          description="먹은 음식 상세 정보")
 def read_eaten_food_details(
@@ -39,12 +41,16 @@ def read_eaten_food_details(
 
     return db_eaten_food
 
-@app.get("/eaten/foods/info",description="먹은 음식 전체 불러오기 test")
+@app.get("/eaten-foods/today",
+         response_model = list[account_schema.EatenFoodSimple],
+         description="오늘 먹은 음식 전체 불러오기")
 def get_user_eaten_foods(db:Session = Depends(get_db),
                          current_user: dict = Depends(account_crud.get_current_user)):
 
     user_no = current_user.get("user_no")
-    foods = account_crud.get_user_eaten_foods(db = db, user_no = user_no)
+
+    today = date.today()
+    foods = account_crud.get_user_eaten_foods(db = db, user_no = user_no, target_date = today)
     return foods
 
 @app.post("/eaten-food-image", description= "먹은 음식 사진 올리기")
