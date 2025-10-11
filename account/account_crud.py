@@ -52,7 +52,7 @@ def create_eaten_food_record(db: Session, user_no: int, image_url: str, nutritio
 def get_user_eaten_foods(db: Session, user_no : int, target_date: date):
     return (db.query(models.UserEatenFood)
             .filter(
-        models.UserEatenFood.user_no == user_no &
+        models.UserEatenFood.user_no == user_no,
         func.date(models.UserEatenFood.created_at) == target_date
     )
     .order_by(models.UserEatenFood.no.asc()).all())
