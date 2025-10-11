@@ -12,6 +12,7 @@ app = APIRouter(
     prefix="/users",
 )
 
+
 @app.get("recommended-amount/calories", description="총 칼로리 대체")
 def get_user_calories(db:Session = Depends(get_db),
                       current_user: dict = Depends(account_crud.get_current_user)):
@@ -19,6 +20,18 @@ def get_user_calories(db:Session = Depends(get_db),
     data = account_crud.get_calories(db = db, user_no = user_no)
     total_calories = data.get("total_calories")
     return total_calories
+
+@app.get("/eaten-foods/today",
+         response_model = list[account_schema.EatenFoodSimple],
+         description="오늘 먹은 음식 전체 불러오기")
+def get_user_eaten_foods(db:Session = Depends(get_db),
+                         current_user: dict = Depends(account_crud.get_current_user)):
+
+    user_no = current_user.get("user_no")
+
+    today = date.today()
+    foods = account_crud.get_user_eaten_foods(db = db, user_no = user_no, target_date = today)
+    return foods
 
 @app.get("/eaten-foods/{eaten_food_no}",
          response_model=account_schema.EatenFoodDetail,
@@ -40,18 +53,6 @@ def read_eaten_food_details(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="해당 음식 기록을 찾을 수 없습니다.")
 
     return db_eaten_food
-
-@app.get("/eaten-foods/today",
-         response_model = list[account_schema.EatenFoodSimple],
-         description="오늘 먹은 음식 전체 불러오기")
-def get_user_eaten_foods(db:Session = Depends(get_db),
-                         current_user: dict = Depends(account_crud.get_current_user)):
-
-    user_no = current_user.get("user_no")
-
-    today = date.today()
-    foods = account_crud.get_user_eaten_foods(db = db, user_no = user_no, target_date = today)
-    return foods
 
 @app.post("/eaten-food-image", description= "먹은 음식 사진 올리기")
 async def upload_eaten_food_image(
