@@ -119,7 +119,7 @@ def make_pictures_for_meals(plan_json_path: str, variability: float = 0.2) -> di
     with open(plan_json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    for meal_key in ("breakfast", "lunch", "dinner"):
+    for meal_key in ("breakfast",): #,"lunch", "dinner"):
         meal_info = data.get(meal_key)
         if not meal_info or not isinstance(meal_info, dict):
             continue
@@ -129,12 +129,15 @@ def make_pictures_for_meals(plan_json_path: str, variability: float = 0.2) -> di
             continue
 
         try:
-            # DALL-E API 호출
+            seed = random.randint(1, 999999)
+
+            prompt = build_image_prompt(title, meal_key, seed)
+
             response = client.images.generate(
-                model="dall-e-3",
-                prompt=f"한국 음식: {title}, 식욕을 돋우는 아름다운 음식 사진, 고화질, 레스토랑 퀄리티",
+                model="dall-e-2", #dall-e-3은 2배 가격
+                prompt=prompt,  # 여기에 build_image_prompt 결과 사용
                 size="1024x1024",
-                quality="standard",
+                # quality="standard", #dall-e-2 는 지원 x 3일때 오픈
                 n=1,
             )
 
@@ -157,6 +160,9 @@ def make_pictures_for_meals(plan_json_path: str, variability: float = 0.2) -> di
             print(f"! {meal_key} 이미지 생성 실패: {e}")
             traceback.print_exc()
             saved_paths[meal_key] = None
+
+    saved_paths["lunch"] = None
+    saved_paths["dinner"] = None
 
     return saved_paths
 
