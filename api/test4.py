@@ -2,9 +2,11 @@ import os
 import json
 import time
 from dotenv import load_dotenv, find_dotenv
+import re
 # .env 로드
 load_dotenv()
 load_dotenv(find_dotenv(usecwd=True))
+
 
 # 올바른 상대 임포트 사용
 from .user_to_meal import run_generation, load_user_payload_from_db
