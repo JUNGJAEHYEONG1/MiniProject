@@ -8,6 +8,14 @@ from sqlalchemy.orm import joinedload
 def get_meal_kit_info(user_no: int, db: Session):
     return db.query(models.MealKit).filter_by(user_no=user_no).all()
 
+def get_latest_recommedations_for_user(db: Session, user_no : int) -> list:
+    return(
+        db.query(models.DailyRecommendation)
+        .filter(models.DailyRecommendation.user_no == user_no)
+        .order_by(models.DailyRecommendation.recommendation_id.desc())
+        .limit(3)
+        .all()
+    )
 
 def create_recommendation_from_analysis(db: Session, user_no: int, analysis_data: dict) -> models.DailyRecommendation:
     try:

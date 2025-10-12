@@ -4,6 +4,15 @@ from fastapi import HTTPException, Form
 from typing import Optional
 from decimal import Decimal
 
+class RecommendationSimple(BaseModel):
+    recommendation_id: int
+    food_name: str
+    image_url: Optional[str] = None
+    calories: Optional[Decimal] = None # 각 식사의 총 칼로리
+
+    class Config:
+        from_attributes = True
+
 class FoodDetailPage(BaseModel):
     food_name: Optional[str] = None
     calories: Optional[Decimal] = None

@@ -20,7 +20,24 @@ app = APIRouter(
     prefix="/ai",
 )
 
+@app.get("/recommendations/latest",
+         description="가장 최근에 추천 받은 식단 목록(아점저) 가져오기",
+         response_model = list[ai_schema.RecommendationSimple])
+def read_latest_recommendations(
+        db: Session = Depends(get_db),
+        current_user: dict = Depends(account_crud.get_current_user)
+):
+    user_no = current_user.get("user_no")
 
+    if user_no is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "Invalid token data")
+
+    latest_recommendations = ai_crud.get_latest_recommedations_for_user(db=db, user_no = user_no)
+
+    if not latest_recommendations:
+        return []
+
+    return latest_recommendations
 @app.post("/generate-recommendation/food",
           description="AI 식단 추천 생성 및 분석 후 DB 저장")
 async def generate_recommendation_analyze_and_save(
@@ -86,7 +103,8 @@ async def generate_recommendation_analyze_and_save(
                 saved_recommendations.append({
                     "food_name": saved_item.food_name,
                     "recommendation_id": saved_item.recommendation_id,
-                    "image_url" : saved_item.image_url
+                    "image_url" : saved_item.image_url,
+                    "calories" : saved_item.calories
                 })
 
         return {
