@@ -3,6 +3,9 @@ import os, json, time, math, random, datetime
 from typing import Dict, Any
 from dotenv import load_dotenv, find_dotenv
 import config
+import re
+import requests
+import traceback
 # 선택적 임포트 - 라이브러리가 없어도 애플리케이션이 실행되도록 함
 try:
     from openai import OpenAI
@@ -106,43 +109,56 @@ def load_plan_json(path: str) -> Dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def make_pictures_for_meals(plan_json_path: str, variability: float = 0.3):
-    """
-    plan_json_path: recommendation_타임스탬프.json 경로
-    variability: 0.0~1.0, 클수록 더 다양한 스타일(시드 흔들기)
-    """
-    data = load_plan_json(plan_json_path)
 
-    # 끼니별 title 추출
-    meals = []
+import time
+
+
+def make_pictures_for_meals(plan_json_path: str, variability: float = 0.2) -> dict:
+    saved_paths = {}
+
+    with open(plan_json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
     for meal_key in ("breakfast", "lunch", "dinner"):
-        title = ((data.get(meal_key) or {}).get("title") or "").strip()
+        meal_info = data.get(meal_key)
+        if not meal_info or not isinstance(meal_info, dict):
+            continue
+
+        title = meal_info.get("title", "").strip()
         if not title:
             continue
-        meals.append((meal_key, title))
 
-    if not meals:
-        print("생성할 제목이 없습니다.")
-        return
+        try:
+            # DALL-E API 호출
+            response = client.images.generate(
+                model="dall-e-3",
+                prompt=f"한국 음식: {title}, 식욕을 돋우는 아름다운 음식 사진, 고화질, 레스토랑 퀄리티",
+                size="1024x1024",
+                quality="standard",
+                n=1,
+            )
 
-    # 공통 베이스 시드 + 끼니별 변주
-    base_seed = now_seed()
-    for idx, (meal_key, title) in enumerate(meals):
-        # 변주를 위해 베이스 시드에 가중 무작위 더함
-        local_seed = (base_seed * (idx + 3) + int(random.random() * 10**6)) % 10**9
-        # variability 비율만큼 추가 난수 섞기
-        if variability > 0:
-            jitter = int(variability * 10**6 * random.random())
-            local_seed = (local_seed + jitter) % 10**9
+            image_url = response.data[0].url
+            image_data = requests.get(image_url).content
 
-        prompt = build_image_prompt(title=title, meal_key=meal_key, seed=local_seed)
-        print(f"[{meal_key}] title='{title}', seed={local_seed}")
+            sanitized_title = re.sub(r'[\\/*?:"<>|]', "", title).replace(" ", "_").replace(",", "")
+            out_path = os.path.join(OUT_DIR, f"{meal_key}_{sanitized_title}.png")
 
-        img_bytes = generate_image_from_prompt(prompt, size="1024x1024", quality="high")
-        out_name = image_file_name(title, meal_key)
-        out_path = os.path.join(OUT_DIR, out_name)
-        save_image(img_bytes, out_path)
-        print(f"[saved] {out_path}")
+            with open(out_path, 'wb') as img_file:
+                img_file.write(image_data)
+
+            print(f"[saved] {out_path}")
+            saved_paths[meal_key] = out_path
+
+            # 각 이미지 생성 후 1초 대기 (rate limit 방지)
+            time.sleep(1)
+
+        except Exception as e:
+            print(f"! {meal_key} 이미지 생성 실패: {e}")
+            traceback.print_exc()
+            saved_paths[meal_key] = None
+
+    return saved_paths
 
 if __name__ == "__main__":
     # 가장 최근 recommendation_*.json을 자동 탐색하거나, 직접 경로를 인자로 넘기도록 구현 가능
