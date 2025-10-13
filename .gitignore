@@ -21,6 +21,7 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+*.sql
 
 # Virtual Environment
 venv/

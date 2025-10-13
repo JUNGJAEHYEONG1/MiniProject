@@ -22,34 +22,45 @@ s3_client = boto3.client(
 )
 
 
+import boto3
+import traceback
+import uuid
+import os
+from botocore.exceptions import NoCredentialsError
+from fastapi import UploadFile
+
+# ... (기존 S3 클라이언트 설정) ...
+
+
 def upload_file_to_s3(
     file,  # FastAPI의 UploadFile 객체 또는 open()으로 연 파일 객체
     user_no: int,
-    save_path: str = "user_eats"  # <-- 1. save_path 추가 및 기본값 설정
+    save_path: str = "user_eats"
 ):
     """
     파일 객체를 S3에 업로드하고 해당 파일의 URL을 반환합니다.
-    - file: FastAPI의 UploadFile 또는 open()으로 연 파일 객체
-    - user_no: 사용자의 고유 번호
-    - save_path: S3 내의 최상위 폴더 경로 (기본값: 'user_eats')
     """
     try:
-        # 2. 파일 이름과 업로드할 파일 객체를 안전하게 가져옵니다.
-        if isinstance(file, UploadFile):
-            # FastAPI의 UploadFile 객체인 경우
+        # ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ 이 부분이 수정된 핵심 로직입니다 ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+
+        # 1. isinstance 대신 hasattr를 사용하여 객체의 특징으로 타입을 구별합니다.
+        if hasattr(file, 'filename'):
+            # .filename 속성이 있으면 FastAPI의 UploadFile 객체로 간주합니다.
             filename = file.filename
             file_to_upload = file.file
             content_type = file.content_type
-        else:
-            # open()으로 연 일반 파일 객체인 경우 (AI 생성 이미지)
+        elif hasattr(file, 'name'):
+            # .name 속성이 있으면 open()으로 연 일반 파일 객체로 간주합니다.
             filename = os.path.basename(file.name)
             file_to_upload = file
-            content_type = 'image/png' # AI 생성 이미지는 png로 가정
+            content_type = 'image/png'  # AI 생성 이미지는 png로 가정
+        else:
+            # 두 속성 모두 없는 경우, 예외를 발생시킵니다.
+            raise ValueError("Unsupported file type provided to upload_file_to_s3")
 
-        # 3. S3에 저장될 최종 파일 경로를 구성합니다.
-        #    - 유니크한 ID를 추가하여 파일 이름 중복을 방지합니다.
-        #    - 예: user_eats/2/uuid-photo.jpg
-        #    - 예: ai_recommendations/2/uuid-breakfast.png
+        # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        # S3에 저장될 최종 파일 경로를 구성합니다.
         object_name = f"{save_path}/{user_no}/{uuid.uuid4()}-{filename}"
 
         # 파일 업로드
